@@ -112,6 +112,11 @@
                                                  :form="testCase" :case-id="testCase.caseId" ref="otherInfo"/>
                     </el-form-item >
 
+                    <ms-form-divider :title="$t('test_track.case.execute_remark')"/>
+                    <form-rich-text-item :label-width="formLabelWidth"
+                                         :title="''"
+                                         :data="testCase" prop="executeRemark"/>
+
                   </el-form>
                 </div>
 
@@ -327,6 +332,7 @@ export default {
       }
       param.results = JSON.stringify(param.results);
       param.actualResult = this.testCase.actualResult;
+      param.executeRemark = this.testCase.executeRemark;
       this.$post('/test/plan/case/edit', param, () => {
         this.$request(option, (response) => {
 
@@ -424,6 +430,7 @@ export default {
           // 如果没值,使用模板的默认值
           this.testCase.actualResult = this.testCaseTemplate.actualResult;
         }
+        this.testCase.executeRemark = item.executeRemark;
         this.getComments(item);
       });
     },

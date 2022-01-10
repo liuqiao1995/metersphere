@@ -5,7 +5,7 @@
         <div class="content">
           <div class="title">
             <div class="title-img">
-              <img :src="'/display/file/loginLogo'" alt="">
+              <img src="@/assets/logo-MeterSphere.png" alt="">
             </div>
             <div class="welcome">
               <span>{{ $t("commons.welcome") }}</span>
@@ -48,7 +48,7 @@
 
       <el-col :span="12">
         <div class="content">
-          <img class="login-image" :src="'/display/file/loginImage'" alt="">
+          <img class="login-image" src="@/assets/info.png" alt="">
         </div>
       </el-col>
 

@@ -17,7 +17,6 @@ import io.metersphere.commons.utils.Pager;
 import io.metersphere.controller.request.ResetOrderRequest;
 import io.metersphere.controller.request.ScheduleRequest;
 import io.metersphere.dto.MsExecResponseDTO;
-import io.metersphere.jmeter.LocalRunner;
 import io.metersphere.log.annotation.MsAuditLog;
 import io.metersphere.notice.annotation.SendNotice;
 import io.metersphere.task.service.TaskService;
@@ -33,6 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -202,9 +202,8 @@ public class ApiAutomationController {
     @MsAuditLog(module = "api_automation", type = OperLogConstants.DEBUG, title = "#request.scenarioName", sourceId = "#request.scenarioId", project = "#request.projectId")
     public void runDebug(@RequestPart("request") RunDefinitionRequest request,
                          @RequestPart(value = "bodyFiles", required = false) List<MultipartFile> bodyFiles, @RequestPart(value = "scenarioFiles", required = false) List<MultipartFile> scenarioFiles) {
-        request.setExecuteType(ExecuteType.Debug.name());
-        if (request.isSaved()) {
-            request.setExecuteType(ExecuteType.Saved.name());
+        if (StringUtils.isEmpty(request.getExecuteType())) {
+            request.setExecuteType(ExecuteType.Debug.name());
         }
         apiAutomationService.debugRun(request, bodyFiles, scenarioFiles);
     }
@@ -329,8 +328,12 @@ public class ApiAutomationController {
     @GetMapping(value = "/stop/{reportId}")
     public void stop(@PathVariable String reportId) {
         if (StringUtils.isNotEmpty(reportId)) {
-            execThreadPoolExecutor.removeQueue(reportId);
-            new LocalRunner().stop(reportId);
+            List<TaskRequest> reportIds = new ArrayList<>();
+            TaskRequest taskRequest = new TaskRequest();
+            taskRequest.setReportId(reportId);
+            taskRequest.setType("SCENARIO");
+            reportIds.add(taskRequest);
+            taskService.stop(reportIds);
         }
     }
 

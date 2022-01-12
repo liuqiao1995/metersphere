@@ -3,7 +3,6 @@ package io.metersphere.api.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import io.metersphere.api.cache.TestPlanReportExecuteCatch;
 import io.metersphere.api.dto.APIReportBatchRequest;
 import io.metersphere.api.dto.DeleteAPIReportRequest;
 import io.metersphere.api.dto.EnvironmentType;
@@ -103,7 +102,6 @@ public class ApiScenarioReportService {
                 this.put(dto.getReportId(), status);
             }};
             testPlanLog.info("TestPlanReportId" + JSONArray.toJSONString(dto.getReportId()) + " EXECUTE OVER. SCENARIO STATUS : " + JSONObject.toJSONString(reportMap));
-            TestPlanReportExecuteCatch.updateApiTestPlanExecuteInfo(dto.getTestPlanReportId(), null, reportMap, null);
         }
 
         ApiScenarioReport scenarioReport;
@@ -135,7 +133,16 @@ public class ApiScenarioReportService {
 
     public List<APIScenarioReportResult> list(QueryAPIReportRequest request) {
         request.setOrders(ServiceUtils.getDefaultOrder(request.getOrders()));
-        return extApiScenarioReportMapper.list(request);
+        List<APIScenarioReportResult> list = extApiScenarioReportMapper.list(request);
+        List<String> userIds = list.stream().map(APIScenarioReportResult::getUserId)
+                .collect(Collectors.toList());
+        Map<String, User> userMap = ServiceUtils.getUserMap(userIds);
+        list.forEach(item -> {
+            User user = userMap.get(item.getUserId());
+            if (user != null)
+                item.setUserName(user.getName());
+        });
+        return list;
     }
 
     public List<String> idList(QueryAPIReportRequest request) {

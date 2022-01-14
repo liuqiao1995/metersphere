@@ -353,6 +353,7 @@ public class ApiAutomationService {
         deleteUpdateBodyFile(scenario, beforeScenario);
         List<ApiMethodUrlDTO> useUrl = this.parseUrl(scenario);
         scenario.setUseUrl(JSONArray.toJSONString(useUrl));
+        scenario.setCreateUser(null);
         apiScenarioMapper.updateByPrimaryKeySelective(scenario);
         apiScenarioReferenceIdService.saveByApiScenario(scenario);
         extScheduleMapper.updateNameByResourceID(request.getId(), request.getName());//  修改场景name，同步到修改首页定时任务
@@ -644,6 +645,62 @@ public class ApiAutomationService {
 
     public ApiScenarioWithBLOBs getApiScenario(String id) {
         return apiScenarioMapper.selectByPrimaryKey(id);
+    }
+
+    public ApiScenarioWithBLOBs getNewApiScenario(String id) {
+        ApiScenarioWithBLOBs scenarioWithBLOBs = apiScenarioMapper.selectByPrimaryKey(id);
+        if (scenarioWithBLOBs != null && StringUtils.isNotEmpty(scenarioWithBLOBs.getScenarioDefinition())) {
+            JSONObject element = JSON.parseObject(scenarioWithBLOBs.getScenarioDefinition());
+            this.dataFormatting(element);
+            scenarioWithBLOBs.setScenarioDefinition(JSON.toJSONString(element));
+        }
+        return scenarioWithBLOBs;
+    }
+
+    public void dataFormatting(JSONArray hashTree) {
+        for (int i = 0; i < hashTree.size(); i++) {
+            JSONObject element = hashTree.getJSONObject(i);
+            if (element != null && StringUtils.equalsIgnoreCase(element.getString("type"), "scenario")) {
+                ApiScenarioWithBLOBs scenarioWithBLOBs = apiScenarioMapper.selectByPrimaryKey(element.getString("id"));
+                if (scenarioWithBLOBs != null && StringUtils.isNotEmpty(scenarioWithBLOBs.getScenarioDefinition())) {
+                    boolean enable = element.getBoolean("enable");
+                    boolean environmentEnable = element.getBoolean("environmentEnable");
+                    if (StringUtils.equalsIgnoreCase(element.getString("referenced"), "REF")) {
+                        element = JSON.parseObject(scenarioWithBLOBs.getScenarioDefinition());
+                        element.put("referenced", "REF");
+                    }
+                    element.put("num", scenarioWithBLOBs.getNum());
+                    element.put("enable", enable);
+                    element.put("environmentEnable", environmentEnable);
+                    hashTree.set(i, element);
+                }
+            }
+            if (element.containsKey("hashTree")) {
+                JSONArray elementJSONArray = element.getJSONArray("hashTree");
+                dataFormatting(elementJSONArray);
+            }
+        }
+    }
+
+    public void dataFormatting(JSONObject element) {
+        if (element != null && StringUtils.equalsIgnoreCase(element.getString("type"), "scenario")) {
+            ApiScenarioWithBLOBs scenarioWithBLOBs = apiScenarioMapper.selectByPrimaryKey(element.getString("id"));
+            if (scenarioWithBLOBs != null && StringUtils.isNotEmpty(scenarioWithBLOBs.getScenarioDefinition())) {
+                boolean enable = element.getBoolean("enable");
+                boolean environmentEnable = element.getBoolean("environmentEnable");
+                if (StringUtils.equalsIgnoreCase(element.getString("referenced"), "REF")) {
+                    element = JSON.parseObject(scenarioWithBLOBs.getScenarioDefinition());
+                    element.put("referenced", "REF");
+                }
+                element.put("enable", enable);
+                element.put("environmentEnable", environmentEnable);
+                element.put("num", scenarioWithBLOBs.getNum());
+            }
+        }
+        if (element != null && element.containsKey("hashTree")) {
+            JSONArray elementJSONArray = element.getJSONArray("hashTree");
+            dataFormatting(elementJSONArray);
+        }
     }
 
     public String setDomain(ApiScenarioEnvRequest request) {

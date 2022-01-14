@@ -256,7 +256,7 @@
 
       <!--执行组件-->
       <ms-run :debug="true" v-if="type!=='detail'" :environment="projectEnvMap" :reportId="reportId" :saved="saved"
-              :run-data="debugData" :environment-type="environmentType" :environment-group-id="envGroupId"
+              :run-data="debugData" :environment-type="environmentType" :environment-group-id="envGroupId" :executeType="executeType"
               @runRefresh="runRefresh" @errorRefresh="errorRefresh" ref="runTest"/>
       <!-- 调试结果 -->
       <el-drawer v-if="type!=='detail'" :visible.sync="debugVisible" :destroy-on-close="true" direction="ltr"
@@ -466,7 +466,8 @@ export default {
       runScenario: undefined,
       showFollow: false,
       envGroupId: "",
-      environmentType: ENV_TYPE.JSON
+      environmentType: ENV_TYPE.JSON,
+      executeType: "",
     }
   },
   watch: {
@@ -639,6 +640,7 @@ export default {
       this.reqTotalTime = 0;
       this.reqTotal = 0;
       this.reqSuccess = 0;
+      this.executeType = "";
     },
     clearResult(arr) {
       if (arr) {
@@ -711,71 +713,56 @@ export default {
       this.messageWebSocket.onmessage = this.onDebugMessage;
     },
     runningEditParent(node) {
-      if (node) {
+      if (node.parent && node.parent.data && node.parent.data.id) {
         node.data.testing = true;
-        if (node.parent && node.parent.data && node.parent.data.id) {
-          this.runningEditParent(node.parent);
-        }
+        this.runningEditParent(node.parent);
       }
     },
     runningNodeChild(arr, resultData) {
       arr.forEach(item => {
-        if (resultData && resultData.startsWith("result_")) {
-          let data = JSON.parse(resultData.substring(7));
-          if (data.method === 'Request' && data.subRequestResults && data.subRequestResults.length > 0) {
-            data.subRequestResults.forEach(subItem => {
-              if (item.data && item.data.id + "_" + item.data.parentIndex === subItem.resourceId) {
-                subItem.requestResult.console = data.responseResult.console;
-                item.data.requestResult.push(subItem);
-                // 更新父节点状态
-                this.resultEvaluation(subItem.resourceId, subItem.success);
-                item.data.testing = false;
-                item.data.debug = true;
-              }
-            })
-          } else if ((item.data && item.data.id + "_" + item.data.parentIndex === data.resourceId)
-            || (item.data && item.data.resourceId + "_" + item.data.parentIndex === data.resourceId)) {
-            item.data.requestResult.push(data);
-            // 更新父节点状态
-            this.resultEvaluation(data.resourceId, data.success);
-            item.data.testing = false;
-            item.data.debug = true;
-          }
-        } else if (item.data && item.data.id + "_" + item.data.parentIndex === resultData) {
-          item.data.testing = true;
-          this.runningEditParent(item.parent);
-        }
+        this.setResults(resultData, item);
         if (item.childNodes && item.childNodes.length > 0) {
           this.runningNodeChild(item.childNodes, resultData);
         }
       })
     },
-    runningEvaluation(resultData) {
-      if (this.$refs.stepTree && this.$refs.stepTree.root) {
-        this.$refs.stepTree.root.childNodes.forEach(item => {
-          if (item.data && item.data.id + "_" + item.data.parentIndex === resultData) {
-            item.data.testing = true;
-          } else if (resultData && resultData.startsWith("result_")) {
-            let data = JSON.parse(resultData.substring(7));
-            if (data.method === 'Request' && data.subRequestResults && data.subRequestResults.length > 0) {
-              data.subRequestResults.forEach(subItem => {
-                if (item.data && item.data.id + "_" + item.data.parentIndex === subItem.resourceId) {
-                  item.data.requestResult.push(subItem);
-                  // 更新父节点状态
-                  this.resultEvaluation(subItem.resourceId, subItem.success);
-                  item.data.testing = false;
-                  item.data.debug = true;
-                }
-              })
-            } else if (item.data && item.data.id + "_" + item.data.parentIndex === data.resourceId
-              || (item.data && item.data.resourceId + "_" + item.data.parentIndex === data.resourceId)) {
-              item.data.requestResult.push(data);
+    setResults(resultData, item) {
+      if (resultData && resultData.startsWith("result_")) {
+        let data = JSON.parse(resultData.substring(7));
+        if (data.method === 'Request' && data.subRequestResults && data.subRequestResults.length > 0) {
+          data.subRequestResults.forEach(subItem => {
+            if (item.data && item.data.id + "_" + item.data.parentIndex === subItem.resourceId) {
+              subItem.requestResult.console = data.responseResult.console;
+              if (!item.data.requestResult) {
+                item.data.requestResult = [];
+              }
+              item.data.requestResult.push(subItem);
               // 更新父节点状态
-              this.resultEvaluation(data.resourceId, data.success);
+              this.resultEvaluation(subItem.resourceId, subItem.success);
               item.data.testing = false;
               item.data.debug = true;
             }
+          })
+        } else if ((item.data && item.data.id + "_" + item.data.parentIndex === data.resourceId)
+          || (item.data && item.data.resourceId + "_" + item.data.parentIndex === data.resourceId)) {
+          if (!item.data.requestResult) {
+            item.data.requestResult = [];
           }
+          item.data.requestResult.push(data);
+          // 更新父节点状态
+          this.resultEvaluation(data.resourceId, data.success);
+          item.data.testing = false;
+          item.data.debug = true;
+        }
+      } else if (item.data && item.data.id + "_" + item.data.parentIndex === resultData) {
+        item.data.testing = true;
+        this.runningEditParent(item.parent);
+      }
+    },
+    runningEvaluation(resultData) {
+      if (this.$refs.stepTree && this.$refs.stepTree.root) {
+        this.$refs.stepTree.root.childNodes.forEach(item => {
+          this.setResults(resultData, item);
           if (item.childNodes && item.childNodes.length > 0) {
             this.runningNodeChild(item.childNodes, resultData);
           }
@@ -805,6 +792,8 @@ export default {
     },
     handleCommand() {
       this.debug = false;
+      this.saved = true;
+      this.executeType = "Saved";
       /*触发执行操作*/
       this.$refs['currentScenario'].validate(async (valid) => {
         if (valid) {
@@ -1405,7 +1394,7 @@ export default {
 
     formatData(hashTree) {
       for (let i in hashTree) {
-        if (!hashTree[i].clazzName) {
+        if (hashTree[i] && TYPE_TO_C.get(hashTree[i].type) && !hashTree[i].clazzName) {
           hashTree[i].clazzName = TYPE_TO_C.get(hashTree[i].type);
         }
         if (hashTree[i] && hashTree[i].authManager && !hashTree[i].authManager.clazzName) {

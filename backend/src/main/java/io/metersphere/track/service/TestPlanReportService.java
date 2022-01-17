@@ -222,6 +222,19 @@ public class TestPlanReportService {
         return returnDTO;
     }
 
+    public void genTestPlanReportContent(TestPlanScheduleReportInfoDTO returnDTO) {
+        TestPlanReportContentWithBLOBs testPlanReportContent = new TestPlanReportContentWithBLOBs();
+        testPlanReportContent.setId(UUID.randomUUID().toString());
+        testPlanReportContent.setTestPlanReportId(returnDTO.getTestPlanReport().getId());
+        if (testPlanReportContent.getStartTime() == null) {
+            testPlanReportContent.setStartTime(System.currentTimeMillis());
+        }
+        if (testPlanReportContent.getEndTime() == null) {
+            testPlanReportContent.setEndTime(System.currentTimeMillis());
+        }
+        testPlanReportContentMapper.insert(testPlanReportContent);
+    }
+
     public TestPlanReportDTO getMetric(String reportId) {
         TestPlanReportDTO returnDTO = new TestPlanReportDTO();
         TestPlanReport report = testPlanReportMapper.selectByPrimaryKey(reportId);
@@ -405,6 +418,9 @@ public class TestPlanReportService {
     public TestPlanReportContentWithBLOBs parseReportDaoToReportContent(TestPlanSimpleReportDTO reportDTO, TestPlanReportContentWithBLOBs testPlanReportContentWithBLOBs) {
         String id = testPlanReportContentWithBLOBs.getId();
         String testPlanReportId = testPlanReportContentWithBLOBs.getTestPlanReportId();
+        if(testPlanReportContentWithBLOBs.getEndTime() != null){
+            reportDTO.setEndTime(testPlanReportContentWithBLOBs.getEndTime());
+        }
         BeanUtils.copyBean(testPlanReportContentWithBLOBs, reportDTO);
         testPlanReportContentWithBLOBs.setId(id);
         testPlanReportContentWithBLOBs.setTestPlanReportId(testPlanReportId);

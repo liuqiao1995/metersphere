@@ -40,7 +40,6 @@ import {getTestCasesForMinder, getMinderExtraNode} from "@/network/testCase";
 import {addIssueHotBox, getSelectedNodeData, handleIssueAdd, handleIssueBatch} from "./minderUtils";
 import IssueRelateList from "@/business/components/track/case/components/IssueRelateList";
 import TestPlanIssueEdit from "@/business/components/track/case/components/TestPlanIssueEdit";
-import {getIssuesById} from "@/network/Issue";
 
 const {getIssuesListById} = require("@/network/Issue");
 const {getCurrentWorkspaceId} = require("@/common/js/utils");
@@ -211,7 +210,8 @@ name: "TestCaseMinder",
         }
 
         if (data.type !== 'tmp' && data.changed) {
-          if (data.contextChanged && data.resource && data.resource.indexOf(this.$t('test_track.module.module')) > -1) {
+          if (data.contextChanged && data.resource &&
+            (data.resource.indexOf(this.$t('test_track.module.module')) > -1 || data.resource.indexOf("模块") > -1)) {
             this.buildSaveModules(root, data, parent);
             root.children && root.children.forEach(i => {
               if (isModuleNode(i)) {

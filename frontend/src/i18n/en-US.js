@@ -392,6 +392,7 @@ export default {
         end_time_cannot_over_than_start_time: "End time cannot before than start time",
       },
     },
+    no_operation_permission: "No operation permission!",
     enterprise_edition: "ENTERPRISE",
     open_source_version: "OPEN-SOURCE",
     function_planning: "The function is being planned...",
@@ -1994,7 +1995,7 @@ export default {
       },
       export: {
         export: "Export cases",
-        export_tip: "Switch to Interface List and check Use Case Export"
+        export_tip: "Switch to Case List and check Use Case Export"
       },
       case_desc: "Case Desc",
       passing_rate: 'Case Pass Rate'

@@ -728,6 +728,10 @@ export default {
       this.dialogFormVisible = false;
     },
     saveCase(callback) {
+      if (this.readOnly) {
+        this.$warning(this.$t("commons.no_operation_permission"));
+        return false;
+      }
       let isValidate = true;
       this.$refs['caseFrom'].validate((valid) => {
         if (!valid) {

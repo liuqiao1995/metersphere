@@ -130,35 +130,41 @@ public class PerformanceTestService {
     }
 
     public void delete(DeleteTestPlanRequest request) {
-        String testId = request.getId();
 
-        if (!request.isForceDelete()) {
-            testCaseService.checkIsRelateTest(testId);
-        }
-        // 删除时保存jmx内容
-        List<FileMetadata> fileMetadataList = getFileMetadataByTestId(testId);
-        List<FileMetadata> jmxFiles = fileMetadataList.stream().filter(f -> StringUtils.equalsIgnoreCase(f.getType(), FileType.JMX.name())).collect(Collectors.toList());
-        byte[] bytes = EngineFactory.mergeJmx(jmxFiles);
-        LoadTestReportExample loadTestReportExample = new LoadTestReportExample();
-        loadTestReportExample.createCriteria().andTestIdEqualTo(testId);
-        List<LoadTestReport> loadTestReports = loadTestReportMapper.selectByExample(loadTestReportExample);
-        loadTestReports.forEach(loadTestReport -> {
-            LoadTestReportWithBLOBs record = new LoadTestReportWithBLOBs();
-            record.setId(loadTestReport.getId());
-            record.setJmxContent(new String(bytes, StandardCharsets.UTF_8));
-            extLoadTestReportMapper.updateJmxContentIfAbsent(record);
+        LoadTestWithBLOBs loadTest = loadTestMapper.selectByPrimaryKey(request.getId());
+        LoadTestExample example = new LoadTestExample();
+        example.createCriteria().andRefIdEqualTo(loadTest.getRefId());
+        List<LoadTest> loadTests = loadTestMapper.selectByExample(example);
+
+        loadTests.forEach(test -> {
+            if (!request.isForceDelete()) {
+                testCaseService.checkIsRelateTest(test.getId());
+            }
+            // 删除时保存jmx内容
+            List<FileMetadata> fileMetadataList = getFileMetadataByTestId(test.getId());
+            List<FileMetadata> jmxFiles = fileMetadataList.stream().filter(f -> StringUtils.equalsIgnoreCase(f.getType(), FileType.JMX.name())).collect(Collectors.toList());
+            byte[] bytes = EngineFactory.mergeJmx(jmxFiles);
+            LoadTestReportExample loadTestReportExample = new LoadTestReportExample();
+            loadTestReportExample.createCriteria().andTestIdEqualTo(test.getId());
+            List<LoadTestReport> loadTestReports = loadTestReportMapper.selectByExample(loadTestReportExample);
+            loadTestReports.forEach(loadTestReport -> {
+                LoadTestReportWithBLOBs record = new LoadTestReportWithBLOBs();
+                record.setId(loadTestReport.getId());
+                record.setJmxContent(new String(bytes, StandardCharsets.UTF_8));
+                extLoadTestReportMapper.updateJmxContentIfAbsent(record);
+            });
+            //delete scheduleFunctionalCases
+            scheduleService.deleteByResourceId(test.getId(), ScheduleGroup.PERFORMANCE_TEST.name());
+
+            // delete load_test
+            loadTestMapper.deleteByPrimaryKey(test.getId());
+
+            testPlanLoadCaseService.deleteByTestId(test.getId());
+
+            detachFileByTestId(test.getId());
+
+            deleteFollows(test.getId());
         });
-        //delete scheduleFunctionalCases
-        scheduleService.deleteByResourceId(testId, ScheduleGroup.PERFORMANCE_TEST.name());
-
-        // delete load_test
-        loadTestMapper.deleteByPrimaryKey(request.getId());
-
-        testPlanLoadCaseService.deleteByTestId(testId);
-
-        detachFileByTestId(request.getId());
-
-        deleteFollows(request.getId());
     }
 
     private void deleteFollows(String testId) {
@@ -568,7 +574,9 @@ public class PerformanceTestService {
         copy.setUpdateTime(System.currentTimeMillis());
         copy.setStatus(APITestStatus.Saved.name());
         copy.setUserId(Objects.requireNonNull(SessionUtils.getUser()).getId());
+        copy.setCreateUser(Objects.requireNonNull(SessionUtils.getUser()).getId());
         copy.setNum(getNextNum(copy.getProjectId()));
+        copy.setRefId(copy.getId());
         loadTestMapper.insert(copy);
         // copy test file
         copyLoadTestFiles(request.getId(), copy.getId());
@@ -1017,10 +1025,6 @@ public class PerformanceTestService {
     public void deleteLoadTestByVersion(String version,String refId) {
         LoadTestExample loadTestExample = new LoadTestExample();
         loadTestExample.createCriteria().andRefIdEqualTo(refId).andVersionIdEqualTo(version);
-        List<LoadTest> loadTests = loadTestMapper.selectByExample(loadTestExample);
-        LoadTest loadTest = loadTests.get(0);
-        DeleteTestPlanRequest request = new DeleteTestPlanRequest();
-        request.setId(loadTest.getId());
-        this.delete(request);
+        loadTestMapper.deleteByExample(loadTestExample);
     }
 }

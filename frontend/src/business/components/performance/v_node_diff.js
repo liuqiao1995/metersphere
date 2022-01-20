@@ -76,12 +76,12 @@ function changeStyle(diffNode){
     if(diffNode.oldNodeArray[i].className==='cell'){
       let rowVnodeElm = findRowVnodeElm(diffNode.oldNodeArray[i]);
       if(isDef(rowVnodeElm.style)){
-        rowVnodeElm.style.setProperty("background-color","rgb(241,200,196)",'important')
+        rowVnodeElm.style.setProperty("background-color","rgb(241,200,196,0.45)",'important')
       }else if(isDef(rowVnodeElm.parentNode.style)&&rowVnodeElm!=='comment'){
-        rowVnodeElm.parentNode.style.setProperty("background-color","rgb(241,200,196)",'important')
+        rowVnodeElm.parentNode.style.setProperty("background-color","rgb(241,200,196,0.45)",'important')
       }
     }else{
-      changeStyleBySubset(diffNode.oldNodeArray[i],"rgb(241,200,196)");
+      changeStyleBySubset(diffNode.oldNodeArray[i],"rgb(241,200,196,0.45)");
     }
   }
 
@@ -92,12 +92,12 @@ function changeStyle(diffNode){
     if(diffNode.nodeArray[i].className==='cell'){
       let rowVnodeElm = findRowVnodeElm(diffNode.nodeArray[i]);
       if(isDef(rowVnodeElm.style)){
-        rowVnodeElm.style.setProperty("background-color","rgb(215, 243, 215)",'important')
+        rowVnodeElm.style.setProperty("background-color","rgb(121, 225, 153,0.3)",'important')
       }else if(isDef(rowVnodeElm.parentNode.style)&&rowVnodeElm!=='comment'){
-        rowVnodeElm.parentNode.style.setProperty("background-color","rgb(215, 243, 215)",'important')
+        rowVnodeElm.parentNode.style.setProperty("background-color","rgb(121, 225, 153,0.3)",'important')
       }
     }else{
-      changeStyleBySubset(diffNode.nodeArray[i],"rgb(215, 243, 215)");
+      changeStyleBySubset(diffNode.nodeArray[i],"rgb(121, 225, 153,0.3)");
     }
   }
 }
@@ -210,7 +210,7 @@ function sameDetail(oldVnode,newVnode,sameNode){
   if(isDef(oldVnode.children)&&isDef(newVnode.children)){
     sameChildren(oldVnode.children,newVnode.children,sameNode)
   }
-  //剩最后的子节点的时候，分类型做判断
+  //剩最后的子节点的时候，分类型做判断，如果最后的子节点有一个不相同，sameNode就置空，
   if(isUndef(oldVnode.child)&&isUndef(newVnode.child)&&isUndef(oldVnode.children)&&isUndef(newVnode.children)){
     if(isDef(oldVnode.text)&&isDef(newVnode.text)){
       if(oldVnode.text===newVnode.text){
@@ -231,6 +231,12 @@ function sameDetail(oldVnode,newVnode,sameNode){
             sameNode.nodeArray.push(newVnode.elm);
           }
         }else{
+          sameNode.nodeArray = [];
+        }
+      }else if(oldVnode.tag==='textarea'&&newVnode.tag==='textarea'){
+        if(oldVnode.elm.value===newVnode.elm.value){
+          sameNode.nodeArray.push(newVnode.elm);
+        }else {
           sameNode.nodeArray = [];
         }
       }
@@ -288,7 +294,7 @@ function diffDetail(oldVnode,newVnode,diffNode){
           diffNode.nodeArray.push(newVnode.elm);
         }
     }else if(isDef(oldVnode.tag)&&isDef(newVnode.tag)){
-      if((oldVnode.tag==='input'&&newVnode.tag==='input')||(oldVnode.tag==='textarea'&&newVnode.tag==='textarea')){
+      if(oldVnode.tag==='input'&&newVnode.tag==='input'){
         if(oldVnode.elm.value!==newVnode.elm.value){
           diffNode.oldNodeArray.push(oldVnode.elm);
           diffNode.nodeArray.push(newVnode.elm);
@@ -299,6 +305,11 @@ function diffDetail(oldVnode,newVnode,diffNode){
               diffNode.nodeArray.push(newVnode.elm);
             }
           }
+        }
+      }else if(oldVnode.tag==='textarea'&&newVnode.tag==='textarea'){
+        if(oldVnode.elm.value!==newVnode.elm.value){
+          diffNode.oldNodeArray.push(oldVnode.elm);
+          diffNode.nodeArray.push(newVnode.elm);
         }
       }
     }

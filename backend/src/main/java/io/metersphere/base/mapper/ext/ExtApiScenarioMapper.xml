@@ -335,12 +335,19 @@
                 OR
                 version_id = (SELECT project_version.id
                 FROM api_scenario tmp
-                JOIN project_version ON tmp.project_id = project_version.project_id AND
-                tmp.version_id = project_version.id
-                WHERE ref_id = api_scenario.ref_id
-                GROUP BY ref_id
-                HAVING MAX(latest) = 0
-                ORDER BY MAX(project_version.create_time) DESC
+                JOIN project_version
+                ON tmp.project_id = project_version.project_id AND
+                tmp.version_id = project_version.id AND NOT EXISTS(SELECT ref_id
+                FROM api_scenario tmp2
+                JOIN project_version
+                ON tmp2.project_id =
+                project_version.project_id AND
+                version_id =
+                project_version.id AND
+                latest = TRUE
+                WHERE tmp.ref_id = tmp2.ref_id)
+                WHERE tmp.ref_id = api_scenario.ref_id
+                ORDER BY tmp.update_time DESC
                 LIMIT 1)
                 )
             </if>
@@ -351,8 +358,12 @@
       select * from api_scenario where tags like CONCAT('%', #{id},'%')
     </select>
 
-    <select id="selectIds" resultType="io.metersphere.base.domain.ApiScenarioWithBLOBs">
-        select * from api_scenario where id in
+    <select id="selectIds" resultType="io.metersphere.api.dto.automation.ApiScenarioDTO">
+        select api_scenario.*, project_version.name as version_name, project.version_enable
+        from api_scenario
+        LEFT JOIN project_version on project_version.project_id = api_scenario.project_id and project_version.id = version_id
+        LEFT JOIN project on api_scenario.project_id = project.id
+        WHERE api_scenario.id in
         <foreach collection="ids" item="v" separator="," open="(" close=")">
             #{v}
         </foreach>

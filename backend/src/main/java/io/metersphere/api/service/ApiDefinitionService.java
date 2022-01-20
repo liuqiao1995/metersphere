@@ -712,11 +712,16 @@ public class ApiDefinitionService {
                 }
                 batchMapper.insert(apiDefinition);
                 String requestStr = setImportHashTree(apiDefinition);
+
+                // case 设置版本
+                cases.forEach(c -> {
+                    c.setVersionId(apiDefinition.getVersionId());
+                });
                 reSetImportCasesApiId(cases, originId, apiDefinition.getId());
                 reSetImportMocksApiId(mocks, originId, apiDefinition.getId(), apiDefinition.getNum());
                 apiDefinition.setRequest(requestStr);
                 importApiCase(apiDefinition, apiTestImportRequest);
-            }else {
+            } else {
                 //不覆盖的接口，如果没有sameRequest则不导入。此时清空mock信息
                 mocks.clear();
             }
@@ -759,6 +764,10 @@ public class ApiDefinitionService {
             } else {
                 apiDefinition.setVersionId(defaultVersion);
             }
+            // case 设置版本
+            cases.forEach(c -> {
+                c.setVersionId(apiDefinition.getVersionId());
+            });
             apiDefinition.setOrder(getImportNextOrder(apiTestImportRequest.getProjectId()));
             reSetImportCasesApiId(cases, originId, apiDefinition.getId());
             reSetImportMocksApiId(mocks, originId, apiDefinition.getId(), apiDefinition.getNum());
@@ -788,6 +797,7 @@ public class ApiDefinitionService {
                 apiDefinition.setRefId(sameRequest.get(0).getRefId());
                 apiDefinition.setVersionId(apiTestImportRequest.getUpdateVersionId());
                 apiDefinition.setNum(sameRequest.get(0).getNum()); // 使用第一个num当作本次的num
+                apiDefinition.setOrder(sameRequest.get(0).getOrder());
                 batchMapper.insert(apiDefinition);
             } else {
                 ApiDefinition existApi = apiOp.get();
@@ -797,7 +807,10 @@ public class ApiDefinitionService {
                 apiDefinition.setNum(existApi.getNum()); //id 不变
                 apiDefinition.setRefId(existApi.getRefId());
                 apiDefinition.setVersionId(apiTestImportRequest.getUpdateVersionId());
-
+                // case 设置版本
+                cases.forEach(c -> {
+                    c.setVersionId(apiDefinition.getVersionId());
+                });
                 if (!StringUtils.equalsIgnoreCase(apiTestImportRequest.getPlatform(), ApiImportPlatform.Metersphere.name())) {
                     apiDefinition.setTags(existApi.getTags()); // 其他格式 tag 不变，MS 格式替换
                 }
@@ -1370,7 +1383,7 @@ public class ApiDefinitionService {
         BeanUtils.copyBean(swaggerUrlProject, request);
         swaggerUrlProject.setId(UUID.randomUUID().toString());
         // 设置鉴权信息
-        if(request.getHeaders() !=null || request.getArguments() !=null || request.getAuthManager() != null){
+        if (request.getHeaders() != null || request.getArguments() != null || request.getAuthManager() != null) {
             String config = setAuthParams(request);
             swaggerUrlProject.setConfig(config);
         }
@@ -1397,10 +1410,10 @@ public class ApiDefinitionService {
         SwaggerUrlProject swaggerUrlProject = new SwaggerUrlProject();
         BeanUtils.copyBean(swaggerUrlProject, request);
         // 设置鉴权信息
-        if(request.getHeaders() !=null || request.getArguments() !=null || request.getAuthManager() != null){
+        if (request.getHeaders() != null || request.getArguments() != null || request.getAuthManager() != null) {
             String config = setAuthParams(request);
             swaggerUrlProject.setConfig(config);
-        }else{
+        } else {
             swaggerUrlProject.setConfig(null);
         }
         scheduleService.updateSwaggerUrlSchedule(swaggerUrlProject);
@@ -1857,6 +1870,13 @@ public class ApiDefinitionService {
     public void deleteApiDefinitionByVersion(String refId, String version) {
         ApiDefinitionExample example = new ApiDefinitionExample();
         example.createCriteria().andRefIdEqualTo(refId).andVersionIdEqualTo(version);
+        List<ApiDefinition> apiDefinitions = apiDefinitionMapper.selectByExample(example);
+        List<String> ids = apiDefinitions.stream().map(ApiDefinition::getId).collect(Collectors.toList());
+
+        ApiTestCaseExample apiTestCaseExample = new ApiTestCaseExample();
+        apiTestCaseExample.createCriteria().andApiDefinitionIdIn(ids);
+        apiTestCaseMapper.deleteByExample(apiTestCaseExample);
+        //
         apiDefinitionMapper.deleteByExample(example);
     }
 

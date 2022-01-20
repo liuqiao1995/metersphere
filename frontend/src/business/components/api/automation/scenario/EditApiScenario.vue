@@ -1132,6 +1132,10 @@ export default {
       request.active = false;
       request.resourceId = getUUID();
       request.projectId = item.projectId;
+      request.num = item.num;
+      request.versionEnable = item.versionEnable;
+      request.versionId = item.versionId;
+      request.versionName = item.versionName;
       request.requestResult = [];
       if (!request.url) {
         request.url = "";
@@ -1743,7 +1747,11 @@ export default {
     },
     getVersionHistory() {
       this.$get('/api/automation/versions/' + this.currentScenario.id, response => {
-        this.versionData = response.data;
+        if (this.currentScenario.copy) {
+          this.versionData = response.data.filter(v => v.versionId === this.currentScenario.versionId);
+        } else {
+          this.versionData = response.data;
+        }
       });
     },
     compare(row) {

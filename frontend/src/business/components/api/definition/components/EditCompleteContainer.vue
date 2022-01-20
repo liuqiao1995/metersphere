@@ -14,7 +14,7 @@
 
       <el-tooltip class="item" effect="dark" content="Mock设置" placement="right"
                   v-if="currentProtocol === 'HTTP' || currentProtocol === 'TCP'">
-        <el-button plain :class="{active: showMock}" @click="changeTab('mock')" size="small"> Mock</el-button>
+        <el-button plain :class="{active: showMock}" @click="changeTab('mock')" size="small"> MOCK</el-button>
       </el-tooltip>
 
     </el-button-group>
@@ -251,8 +251,8 @@ export default {
     },
     saveApi(data) {
       this.$emit("saveApi", data);
-      if (data != null && data.tags != 'null' && data.tags != undefined) {
-        if (Object.prototype.toString.call(data.tags).match(/\[object (\w+)\]/)[1].toLowerCase() !== 'object') {
+      if (data != null && data.tags !== 'null' && data.tags !== undefined) {
+        if (Object.prototype.toString.call(data.tags)==="[object String]") {
           data.tags = JSON.parse(data.tags);
         }
       }

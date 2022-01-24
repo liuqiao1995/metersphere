@@ -4,6 +4,7 @@
       <template v-slot:header>
         <test-plan-scenario-list-header
           :condition="condition"
+          :projectId="projectId"
           @refresh="search"
           @relevanceCase="$emit('relevanceCase', 'scenario')"/>
       </template>
@@ -39,6 +40,18 @@
                            prop="name"
                            :label="$t('api_test.automation.scenario_name')" min-width="120px"
                            sortable/>
+
+          <ms-table-column
+            :field="item"
+            v-if="versionEnable"
+            prop="versionId"
+            :filters="versionFilters"
+            :label="$t('commons.version')"
+            min-width="120px">
+              <template v-slot:default="scope">
+                <span>{{ scope.row.versionName }}</span>
+            </template>
+          </ms-table-column>
 
           <ms-table-column :field="item"
                            :fields-width="fieldsWidth"
@@ -142,7 +155,10 @@
               <el-link type="danger" @click="showReport(row)" v-if="row.lastResult === 'Fail'">
                 {{ $t('api_test.automation.fail') }}
               </el-link>
-              <el-link type="danger" @click="showReport(row)" v-if="row.lastResult === 'errorReportResult'">
+              <el-link type="danger" @click="showReport(row)" v-if="row.lastResult === 'Error'">
+                {{ $t('api_test.automation.fail') }}
+              </el-link>
+              <el-link style="color: #F6972A" @click="showReport(row)" v-if="row.lastResult === 'errorReportResult'">
                 {{ $t('error_report_library.option.name') }}
               </el-link>
             </template>
@@ -177,7 +193,7 @@
 import MsTableHeader from "@/business/components/common/components/MsTableHeader";
 import MsTablePagination from "@/business/components/common/pagination/TablePagination";
 import MsTag from "../../../../../common/components/MsTag";
-import {getCurrentProjectID, getUUID, strMapToObj} from "@/common/js/utils";
+import {getCurrentProjectID, getUUID, hasLicense, strMapToObj} from "@/common/js/utils";
 import MsApiReportDetail from "../../../../../api/automation/report/ApiReportDetail";
 import MsTableMoreBtn from "../../../../../api/automation/scenario/TableMoreBtn";
 import MsScenarioExtendButtons from "@/business/components/api/automation/scenario/ScenarioExtendBtns";
@@ -229,7 +245,8 @@ export default {
     selectNodeIds: Array,
     reviewId: String,
     planId: String,
-    clickType: String
+    clickType: String,
+    versionEnable: Boolean,
   },
   data() {
     return {
@@ -288,6 +305,7 @@ export default {
       },
       planCaseIds: [],
       apiscenariofilters:{},
+      versionFilters: [],
     }
   },
   computed: {
@@ -301,7 +319,7 @@ export default {
   created() {
     this.apiscenariofilters = API_SCENARIO_FILTERS();
     this.search();
-
+    this.getVersionOptions();
   },
   watch: {
     selectNodeIds() {
@@ -548,6 +566,15 @@ export default {
         this.$post('/test/plan/scenario/case/batch/update/env', param, () => {
           this.$success(this.$t('commons.save_success'));
           this.search();
+        });
+      }
+    },
+    getVersionOptions() {
+      if (hasLicense()) {
+        this.$get('/project/version/get-project-versions/' + getCurrentProjectID(), response => {
+          this.versionFilters = response.data.map(u => {
+            return {text: u.name, value: u.id};
+          });
         });
       }
     },

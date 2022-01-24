@@ -58,6 +58,7 @@
           min-width="120px"/>
 
         <ms-table-column
+          v-if="versionEnable"
           prop="versionId"
           :field="item"
           :filters="versionFilters"
@@ -408,7 +409,10 @@ export default {
     selectNodeIds: {
       type: Array
     },
-    currentVersion: null
+    versionEnable: {
+      type: Boolean,
+      default: false
+    },
   },
   computed: {
     editTestPlanTestCaseOrder() {
@@ -434,10 +438,6 @@ export default {
     },
     condition() {
       this.$emit('setCondition', this.condition);
-    },
-    currentVersion(){
-      this.condition.versionId = this.currentVersion;
-      this.initTableData();
     }
   },
   created() {

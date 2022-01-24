@@ -28,15 +28,20 @@ import io.metersphere.constants.RunModeConstants;
 import io.metersphere.plugin.core.MsParameter;
 import io.metersphere.plugin.core.MsTestElement;
 import io.metersphere.service.EnvironmentGroupProjectService;
+import io.metersphere.utils.LoggerUtil;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jmeter.config.Arguments;
 import org.apache.jmeter.config.CSVDataSet;
 import org.apache.jmeter.config.RandomVariableConfig;
 import org.apache.jmeter.modifiers.CounterConfig;
+import org.apache.jmeter.modifiers.JSR223PreProcessor;
 import org.apache.jmeter.protocol.http.sampler.HTTPSamplerProxy;
 import org.apache.jmeter.save.SaveService;
+import org.apache.jmeter.testelement.AbstractTestElement;
 import org.apache.jmeter.testelement.TestElement;
+import org.apache.jmeter.testelement.TestPlan;
+import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.HashTree;
 
 import java.io.ByteArrayOutputStream;
@@ -179,16 +184,6 @@ public class ElementUtil {
             path = StringUtils.isEmpty(element.getName()) ? element.getType() : element.getName() + DelimiterConstants.STEP_DELIMITER.toString() + path;
         }
         return getFullPath(element.getParent(), path);
-    }
-
-    public static void getScenarioSet(MsTestElement element, List<String> id_names) {
-        if (StringUtils.equals(element.getType(), "scenario")) {
-            id_names.add(element.getResourceId() + "_" + element.getName());
-        }
-        if (element.getParent() == null) {
-            return;
-        }
-        getScenarioSet(element.getParent(), id_names);
     }
 
     public static String getParentName(MsTestElement parent) {
@@ -580,5 +575,52 @@ public class ElementUtil {
             resourceId = config.getScenarioId() + "=" + resourceId;
         }
         return resourceId + "_" + ElementUtil.getFullIndexPath(parent, indexPath);
+    }
+
+    public static JSR223PreProcessor argumentsToProcessor(Arguments arguments) {
+        JSR223PreProcessor processor = new JSR223PreProcessor();
+        processor.setEnabled(true);
+        processor.setName("scene variable");
+        processor.setProperty(TestElement.TEST_CLASS, JSR223PreProcessor.class.getName());
+        processor.setProperty(TestElement.GUI_CLASS, SaveService.aliasToClass("TestBeanGUI"));
+        StringBuffer script = new StringBuffer();
+        if (arguments != null) {
+            for (int i = 0; i < arguments.getArguments().size(); ++i) {
+                String argValue = arguments.getArgument(i).getValue();
+                script.append("vars.put(\"" + arguments.getArgument(i).getName() + "\",\"" + argValue + "\");").append("\n");
+            }
+            processor.setProperty("script", script.toString());
+        }
+        return processor;
+    }
+
+    public static void setBaseParams(AbstractTestElement sampler, MsTestElement parent, ParameterConfig config, String id, String indexPath) {
+        sampler.setProperty("MS-ID", id);
+        sampler.setProperty("MS-RESOURCE-ID", ElementUtil.getResourceId(id, config, parent, indexPath));
+        LoggerUtil.debug("mqtt sampler resourceId :" + sampler.getPropertyAsString("MS-RESOURCE-ID"));
+    }
+
+    public static void accuracyHashTree(HashTree hashTree) {
+        Map<Object, HashTree> objects = new LinkedHashMap<>();
+        Object groupHashTree = hashTree;
+        if (hashTree != null && hashTree.size() > 0) {
+            for (Object key : hashTree.keySet()) {
+                if (key instanceof TestPlan) {
+                    for (Object node : hashTree.get(key).keySet()) {
+                        if (node instanceof ThreadGroup) {
+                            groupHashTree = hashTree.get(key).get(node);
+                        }
+                    }
+                } else {
+                    objects.put(key, hashTree.get(key));
+                }
+            }
+        }
+        if (!objects.isEmpty() && groupHashTree instanceof HashTree) {
+            for (Object key : objects.keySet()) {
+                hashTree.remove(key);
+                ((HashTree) groupHashTree).add(key, objects.get(key));
+            }
+        }
     }
 }

@@ -193,3 +193,34 @@ UPDATE test_case
 
 ALTER TABLE `test_plan_report_content` ADD COLUMN `error_report_cases` LONGTEXT COMMENT '误报状态接口用例';
 ALTER TABLE `test_plan_report_content` ADD COLUMN `error_report_scenarios` LONGTEXT COMMENT '误报状态场景用例';
+
+-- 缺陷相关配置
+ALTER TABLE project
+    ADD issue_config TEXT NULL;
+
+-- 增加 latest 字段优化最新版本查询
+
+ALTER TABLE test_case
+    ADD latest tinyint(1) DEFAULT 0 COMMENT '是否为最新版本 0:否，1:是';
+ALTER TABLE api_definition
+    ADD latest tinyint(1) DEFAULT 0 COMMENT '是否为最新版本 0:否，1:是';
+ALTER TABLE api_scenario
+    ADD latest tinyint(1) DEFAULT 0 COMMENT '是否为最新版本 0:否，1:是';
+ALTER TABLE load_test
+    ADD latest tinyint(1) DEFAULT 0 COMMENT '是否为最新版本 0:否，1:是';
+
+-- 设置最新版本的数据
+
+UPDATE test_case
+SET latest = 1;
+
+UPDATE api_definition
+SET latest = 1;
+
+UPDATE api_scenario
+SET latest = 1;
+
+UPDATE load_test
+SET latest = 1;
+
+

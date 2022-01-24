@@ -17,19 +17,17 @@
         :right-tip="$t('test_track.case.minder')"
         :right-content="$t('test_track.case.minder')"
         :middle-button-enable="false">
-        <template v-slot:version>
-          <version-select v-xpack :project-id="projectId" @changeVersion="changeVersion"/>
-        </template>
+
         <functional-test-case-list
           class="table-list"
           v-if="activeDom === 'left'"
           @openTestCaseRelevanceDialog="openTestCaseRelevanceDialog"
           @refresh="refresh"
           @setCondition="setCondition"
-          :current-version="currentVersion"
           :plan-id="planId"
           :clickType="clickType"
           :select-node-ids="selectNodeIds"
+          :version-enable="versionEnable"
           ref="testPlanTestCaseList"/>
         <test-plan-minder
           :tree-nodes="treeNodes"
@@ -45,6 +43,7 @@
     <test-plan-functional-relevance
       @refresh="refresh"
       :plan-id="planId"
+      :version-enable="versionEnable"
       ref="testCaseRelevance"/>
 
     <is-change-confirm
@@ -68,7 +67,6 @@ import TestPlanFunctionalRelevance
 import IsChangeConfirm from "@/business/components/common/components/IsChangeConfirm";
 import {openMinderConfirm, saveMinderConfirm} from "@/business/components/track/common/minder/minderUtils";
 const requireComponent = require.context('@/business/components/xpack/', true, /\.vue$/);
-const VersionSelect = requireComponent.keys().length > 0 ? requireComponent("./version/VersionSelect.vue") : {};
 
 export default {
   name: "TestPlanFunctional",
@@ -80,7 +78,6 @@ export default {
     FunctionalTestCaseList,
     MsTestPlanCommonComponent,
     NodeTree,
-    'VersionSelect': VersionSelect.default,
   },
   data() {
     return {
@@ -91,14 +88,14 @@ export default {
       selectNode: {},
       condition: {},
       tmpActiveDom: null,
-      tmpPath: null,
-      currentVersion: null,
+      tmpPath: null
     };
   },
   props: [
     'planId',
     'redirectCharType',
-    'clickType'
+    'clickType',
+    'versionEnable',
   ],
   mounted() {
     this.initData();
@@ -182,9 +179,6 @@ export default {
       } else {
         return true;
       }
-    },
-    changeVersion(currentVersion) {
-      this.currentVersion = currentVersion || null;
     }
   }
 };
@@ -192,7 +186,4 @@ export default {
 </script>
 
 <style scoped>
-.version-select {
-  padding-left: 10px;
-}
 </style>

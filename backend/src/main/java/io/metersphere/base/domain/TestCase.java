@@ -65,5 +65,7 @@ public class TestCase implements Serializable {
 
     private String refId;
 
+    private Boolean latest;
+
     private static final long serialVersionUID = 1L;
 }

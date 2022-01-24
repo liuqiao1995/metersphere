@@ -2,29 +2,15 @@
   <div>
     <el-row>
       <el-col :span="12">
-        <el-tag>当前{{oldData.versionName }}</el-tag><span style="margin-left: 10px">{{oldData.userName}}</span><span style="margin-left: 10px">{{oldData.updateTime | timestampFormatDate }}</span>
+        <el-tag>当前{{oldData.versionName }}</el-tag><span style="margin-left: 10px">{{oldData.userName}}</span><span style="margin-left: 10px">{{oldData.createTime | timestampFormatDate }}</span>
       </el-col>
       <el-col :span="12">
-        <el-tag>{{ newData.versionName }}</el-tag><span style="margin-left: 10px">{{newData.userName}}</span><span style="margin-left: 10px">{{newData.updateTime | timestampFormatDate }}</span>
+        <el-tag>{{ newData.versionName }}</el-tag><span style="margin-left: 10px">{{newData.userName}}</span><span style="margin-left: 10px">{{newData.createTime | timestampFormatDate }}</span>
       </el-col>
     </el-row>
     <div class="compare-class" v-loading="isReloadData">
       <el-card style="width: 50%;" ref="old">
         <div style="background-color: white;">
-          <el-row>
-            <el-col>
-              <!--操作按钮-->
-              <el-tooltip :content="$t('commons.follow')" placement="bottom" effect="dark" v-if="!showFollow">
-                <i class="el-icon-star-off"
-                   style="color: #783987; font-size: 25px; margin-right: 5px; position: relative; top: 5px; cursor: pointer "/>
-              </el-tooltip>
-              <el-tooltip :content="$t('commons.cancel')" placement="bottom" effect="dark" v-if="showFollow">
-                <i class="el-icon-star-on"
-                   style="color: #783987; font-size: 28px; margin-right: 5px; position: relative; top: 5px; cursor: pointer "/>
-              </el-tooltip>
-
-            </el-col>
-          </el-row>
           <!-- 基础信息 -->
           <p class="tip">{{ $t('test_track.plan_view.base_info') }} </p>
           <br/>
@@ -62,20 +48,6 @@
       </el-card>
       <el-card style="width: 50%;" ref="new">
         <div style="background-color: white;">
-          <el-row>
-            <el-col>
-              <!--操作按钮-->
-              <el-tooltip :content="$t('commons.follow')" placement="bottom" effect="dark" v-if="!newShowFollow">
-                <i class="el-icon-star-off"
-                   style="color: #783987; font-size: 25px; margin-right: 5px; position: relative; top: 5px; cursor: pointer "/>
-              </el-tooltip>
-              <el-tooltip :content="$t('commons.cancel')" placement="bottom" effect="dark" v-if="newShowFollow">
-                <i class="el-icon-star-on"
-                   style="color: #783987; font-size: 28px; margin-right: 5px; position: relative; top: 5px; cursor: pointer "/>
-              </el-tooltip>
-
-            </el-col>
-          </el-row>
           <!-- 基础信息 -->
           <p class="tip">{{ $t('test_track.plan_view.base_info') }} </p>
           <br/>
@@ -176,14 +148,23 @@ export default{
       activeName: 'remark',
       relationshipCount: 0,
       oldRelationshipCount: 0,
-      isReloadData:true
+      isReloadData:true,
+      oldColor:"",
+      newColor:""
     }
   },
   methods:{
     getDiff(){
       let oldVnode = this.$refs.old
       let vnode = this.$refs.new
-      diff(oldVnode,vnode);
+      if(this.oldData.createTime>this.newData.createTime){
+        this.oldColor = "rgb(121, 225, 153,0.3)";
+        this.newColor = "rgb(241,200,196,0.45)"
+      }else{
+        this.oldColor = "rgb(241,200,196,0.45)"
+        this.newColor = "rgb(121, 225, 153,0.3)";
+      }
+      diff(oldVnode,vnode,this.oldColor,this.newColor);
       this.isReloadData = false
     },
     setCount(count) {
@@ -199,7 +180,7 @@ export default{
       let oldVnode = this.$refs.oldDependencies
       let vnode = this.$refs.newDependencies
       if(oldVnode._data.postCount>0||oldVnode._data.preCount>0||vnode._data.postCount>0||vnode._data.preCount>0){
-        diff(oldVnode,vnode);
+        diff(oldVnode,vnode,this.oldColor,this.newColor);
       }
     }
   },

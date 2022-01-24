@@ -6,13 +6,11 @@
           :project-id="getProjectId()"
           :condition="condition"
           :plan-id="planId"
-          @changeVersion="changeVersion"
           @refresh="initTable"
           @relevanceCase="$emit('relevanceCase')"
           @setEnvironment="setEnvironment"
           v-if="isPlanModel"/>
       </template>
-
       <ms-table
         v-loading="result.loading"
         :data="tableData"
@@ -32,7 +30,6 @@
         row-key="id"
         ref="table">
         <span v-for="(item) in fields" :key="item.key">
-
           <ms-table-column :field="item" prop="num"
                            :fields-width="fieldsWidth"
                            sortable label="ID" min-width="80"/>
@@ -41,6 +38,7 @@
                            :label="$t('test_track.case.name')"/>
 
          <ms-table-column
+           v-if="versionEnable"
            prop="versionId"
            :field="item"
            :filters="versionFilters"
@@ -135,7 +133,10 @@
                 <el-link v-else-if="scope.row.execResult && scope.row.execResult === 'success'"
                          type="primary"
                          @click="getReportResult(scope.row)" v-text="getResult(scope.row.execResult)">
-
+                </el-link>
+                <el-link v-else-if="scope.row.execResult && scope.row.execResult === 'errorReportResult'"
+                         style="color: #F6972A"
+                         @click="getReportResult(scope.row)" v-text="getResult(scope.row.execResult)">
                 </el-link>
                 <div v-else v-text="getResult(scope.row.execResult)"/>
 
@@ -322,7 +323,8 @@ export default {
     },
     planId: String,
     reviewId: String,
-    clickType: String
+    clickType: String,
+    versionEnable: Boolean,
   },
   created: function () {
     this.getMaintainerOptions();
@@ -643,14 +645,6 @@ export default {
           this.$refs.apiCaseResult.open();
         }
       });
-    },
-    changeVersion(currentVersion) {
-      if (currentVersion == "") {
-        this.condition.versionId = null;
-      } else {
-        this.condition.versionId = currentVersion;
-      }
-      this.initTable();
     },
     getVersionOptions() {
       if (hasLicense()) {

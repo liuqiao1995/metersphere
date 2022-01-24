@@ -5,8 +5,7 @@
         <test-plan-load-case-list-header
             :condition="condition"
             :plan-id="planId"
-            :isShowVersion="true"
-            @changeVersion="changeVersion"
+            :isShowVersion="false"
             @refresh="initTable"
             @relevanceCase="$emit('relevanceCase')"/>
       </template>
@@ -46,6 +45,7 @@
             sortable>
           </ms-table-column>
           <ms-table-column
+            v-if="versionEnable"
             prop="versionId"
             :field="item"
             :filters="versionFilters"
@@ -237,6 +237,7 @@ export default {
     planId: String,
     reviewId: String,
     clickType: String,
+    versionEnable: Boolean,
   },
   computed: {
     editTestPlanLoadCaseOrder() {
@@ -466,14 +467,6 @@ export default {
       if (this.refreshScheduler) {
         clearInterval(this.refreshScheduler);
       }
-    },
-    changeVersion(currentVersion) {
-      if (currentVersion == "") {
-        this.condition.versionId = null;
-      } else {
-        this.condition.versionId = currentVersion;
-      }
-      this.initTable();
     },
     getVersionOptions() {
       if (hasLicense()) {

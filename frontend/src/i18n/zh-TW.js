@@ -1288,6 +1288,7 @@ export default {
     automation: {
       open_expansion: "一鍵展開",
       close_expansion: "一鍵收起",
+      all: "全部",
       constant: "常量",
       counter: "計數器",
       random: "隨機數",
@@ -2042,7 +2043,7 @@ export default {
       },
       case_desc: "用例描述",
       passing_rate: '用例通過率',
-      sync_to_new_version: "同步以下信息到新版本",
+      sync_to_new_version: "復製以下信息到新版本",
     },
     plan: {
       test_plan: "測試計劃",

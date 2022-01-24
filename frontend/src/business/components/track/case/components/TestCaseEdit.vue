@@ -23,7 +23,6 @@
                               ref="versionHistory"
                               :version-data="versionData"
                               :current-id="currentTestCaseInfo.id"
-                              :is-test-case-version="true"
                               @confirmOtherInfo="confirmOtherInfo"
                               :current-project-id="currentProjectId"
                               @compare="compare" @checkout="checkout" @create="create" @del="del"/>
@@ -114,7 +113,8 @@
           <ms-form-divider :title="$t('test_track.case.other_info')"/>
 
           <test-case-edit-other-info :read-only="readOnly" :project-id="projectIds" :form="form"
-                                     :label-width="formLabelWidth" :case-id="form.id" ref="otherInfo"/>
+                                     :label-width="formLabelWidth" :case-id="form.id" :version-enable="versionEnable"
+                                     ref="otherInfo"/>
 
           <el-row style="margin-top: 10px" v-if="type!=='add'">
             <el-col :span="20" :offset="1">{{ $t('test_track.review.comment') }}:
@@ -153,6 +153,8 @@
                                 :tree-nodes="treeNodes"></test-case-version-diff>
 
       </el-dialog>
+
+      <version-create-other-info-select @confirmOtherInfo="confirmOtherInfo" ref="selectPropDialog"></version-create-other-info-select>
     </div>
   </el-card>
 
@@ -313,7 +315,7 @@ export default {
       newData: null,
       selectedOtherInfo: null,
       currentProjectId: "" ,
-      casePublic: false
+      casePublic: false,
     };
   },
   props: {
@@ -332,7 +334,8 @@ export default {
       type: Boolean,
       default: false,
     },
-    activeName: String
+    activeName: String,
+    versionEnable: Boolean,
   },
   computed: {
     projectIds() {
@@ -636,17 +639,11 @@ export default {
     },
     initTestCases(testCase) {
       if (this.publicEnable) {
-        this.result = this.$post('/test/case/list/ids/public', this.selectCondition, response => {
-          this.testCases = response.data;
-          for (let i = 0; i < this.testCases.length; i++) {
-            if (this.testCases[i].id === testCase.id) {
-              this.index = i;
-              this.getTestCase(i);
-            }
-          }
-        });
+        this.selectCondition.projectId = null;
       } else {
         this.selectCondition.workspaceId = null;
+      }
+      this.selectCondition.versionId = testCase.versionId
         this.result = this.$post('/test/case/list/ids', this.selectCondition, response => {
           this.testCases = response.data;
           for (let i = 0; i < this.testCases.length; i++) {
@@ -656,7 +653,6 @@ export default {
             }
           }
         });
-      }
     },
     getTestCase(index) {
       let id = "";
@@ -728,25 +724,11 @@ export default {
       this.dialogFormVisible = false;
     },
     saveCase(callback) {
-      if (this.readOnly) {
-        this.$warning(this.$t("commons.no_operation_permission"));
-        return false;
-      }
-      let isValidate = true;
-      this.$refs['caseFrom'].validate((valid) => {
-        if (!valid) {
-          isValidate = false;
-          return false;
-        }
-      });
-      this.$refs['customFieldForm'].validate((valid) => {
-        if (!valid) {
-          isValidate = false;
-          return false;
-        }
-      });
-      if (isValidate) {
+      if (this.validateForm()) {
         this._saveCase(callback);
+      }else{
+        this.$refs.versionHistory.loading = false;
+        this.$refs.selectPropDialog.close();
       }
     },
     _saveCase(callback) {
@@ -977,7 +959,6 @@ export default {
           this.currentProjectId = getCurrentProjectID();
         }
         this.versionData = response.data;
-        this.$refs.versionHistory.cancelOtherInfo();
         this.$refs.versionHistory.loading = false;
       });
     },
@@ -1021,15 +1002,35 @@ export default {
         });
       }
     },
+    validateForm() {
+      let isValidate = true;
+      this.$refs['caseFrom'].validate((valid) => {
+        if (!valid) {
+          isValidate = false;
+          return false;
+        }
+      });
+      this.$refs['customFieldForm'].validate((valid) => {
+        if (!valid) {
+          isValidate = false;
+          return false;
+        }
+      });
+      return isValidate;
+    },
     async create(row) {
-      // 创建新版本
-      this.form.versionId = row.id;
-      let hasOtherInfo = await this.hasOtherInfo();
-      if (hasOtherInfo) {
-        this.$refs.versionHistory.loading = false;
-        this.$refs.versionHistory.showOtherInfo();
+      if (this.validateForm()) {
+        // 创建新版本
+        this.form.versionId = row.id;
+        let hasOtherInfo = await this.hasOtherInfo();
+        if (hasOtherInfo) {
+          this.$refs.versionHistory.loading = false;
+          this.$refs.selectPropDialog.open();
+        } else {
+          this.saveCase();
+        }
       } else {
-        this.saveCase();
+        this.$refs.versionHistory.loading = false;
       }
     },
     del(row) {

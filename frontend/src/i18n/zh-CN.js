@@ -424,7 +424,7 @@ export default {
     is_new: "是否新建",
     form_config: "表单配置",
     form_content: "表单内容",
-    sync_other_info: "同步以下信息到新版本",
+    sync_other_info: "复制以下信息到新版本",
     delete_current_version: '列表版本',
     delete_all_version: '全部版本',
   },
@@ -1288,6 +1288,7 @@ export default {
     automation: {
       open_expansion: "一键展开",
       close_expansion: "一键收起",
+      all: "全部",
       constant: "常量",
       counter: "计数器",
       random: "随机数",

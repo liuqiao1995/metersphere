@@ -2123,6 +2123,66 @@ public class ApiScenarioExample {
             addCriterion("ref_id not between", value1, value2, "refId");
             return (Criteria) this;
         }
+
+        public Criteria andLatestIsNull() {
+            addCriterion("latest is null");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestIsNotNull() {
+            addCriterion("latest is not null");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestEqualTo(Boolean value) {
+            addCriterion("latest =", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestNotEqualTo(Boolean value) {
+            addCriterion("latest <>", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestGreaterThan(Boolean value) {
+            addCriterion("latest >", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestGreaterThanOrEqualTo(Boolean value) {
+            addCriterion("latest >=", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestLessThan(Boolean value) {
+            addCriterion("latest <", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestLessThanOrEqualTo(Boolean value) {
+            addCriterion("latest <=", value, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestIn(List<Boolean> values) {
+            addCriterion("latest in", values, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestNotIn(List<Boolean> values) {
+            addCriterion("latest not in", values, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestBetween(Boolean value1, Boolean value2) {
+            addCriterion("latest between", value1, value2, "latest");
+            return (Criteria) this;
+        }
+
+        public Criteria andLatestNotBetween(Boolean value1, Boolean value2) {
+            addCriterion("latest not between", value1, value2, "latest");
+            return (Criteria) this;
+        }
     }
 
     public static class Criteria extends GeneratedCriteria {

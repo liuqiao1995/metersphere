@@ -17,6 +17,7 @@
           :type="'edit'"
           page-source="definition"
           :total='total'
+          :current-version="currentVersion"
           ref="nodeTree"/>
       </ms-aside-container>
 
@@ -43,7 +44,7 @@
               right-content="CASE"
             >
               <template v-slot:version>
-                <version-select v-xpack :project-id="projectId" @changeVersion="changeVersion"/>
+                <version-select v-xpack :project-id="projectId" :version-id="trashVersion"  @changeVersion="changeVersion" />
               </template>
               <!-- 列表集合 -->
               <ms-api-list
@@ -106,7 +107,7 @@
               :right-button-enable="currentProtocol === 'HTTP' "
             >
               <template v-slot:version>
-                <version-select v-xpack :project-id="projectId" @changeVersion="changeVersion"/>
+                <version-select v-xpack :project-id="projectId" @changeVersion="changeVersion" />
               </template>
               <!-- 列表集合 -->
               <ms-api-list
@@ -357,6 +358,7 @@ export default {
       useEnvironment: String,
       activeTab: "api",
       currentVersion: null,
+      trashVersion:null,
     };
   },
   activated() {
@@ -536,6 +538,7 @@ export default {
         userId: getCurrentUser().id,
         url: "",
         protocol: this.currentProtocol,
+
         environmentId: "",
         remark: "",
         moduleId: 'default-module',
@@ -817,6 +820,7 @@ export default {
     enableTrash(data) {
       this.initApiTableOpretion = "trashEnable";
       this.trashEnable = data;
+      this.trashVersion = this.currentVersion
       if (data) {
         this.apiDefaultTab = "trash";
       } else {
@@ -827,6 +831,7 @@ export default {
       this.initApiTableOpretion = param;
     },
     changeVersion(currentVersion) {
+      this.trashVersion = null;
       this.currentVersion = currentVersion || null;
     }
   }

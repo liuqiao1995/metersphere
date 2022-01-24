@@ -2,27 +2,16 @@
   <div>
     <el-row>
       <el-col :span="12">
-        <el-tag>当前{{oldData.versionName }}</el-tag><span style="margin-left: 10px">{{oldData.userName}}</span><span style="margin-left: 10px">{{oldData.updateTime | timestampFormatDate }}</span>
+        <el-tag>当前{{oldData.versionName }}</el-tag><span style="margin-left: 10px">{{oldData.userName}}</span><span style="margin-left: 10px">{{oldData.createTime | timestampFormatDate }}</span>
       </el-col>
       <el-col :span="12">
-        <el-tag>{{ newData.versionName }}</el-tag><span style="margin-left: 10px">{{newData.userName}}</span><span style="margin-left: 10px">{{newData.updateTime | timestampFormatDate }}</span>
+        <el-tag>{{ newData.versionName }}</el-tag><span style="margin-left: 10px">{{newData.userName}}</span><span style="margin-left: 10px">{{newData.createTime | timestampFormatDate }}</span>
       </el-col>
     </el-row>
     <div class="compare-class" v-loading="isReloadData">
       <el-card style="width: 50%;" ref="old">
-        <el-form :model="oldData" :rules="rule" ref="httpForm" label-width="80px" label-position="right" :disabled="true">
+        <el-form :model="oldData" :rules="rule" ref="httpForm" label-width="80px" label-position="right" >
           <!-- 操作按钮 -->
-
-          <el-tooltip :content="$t('commons.follow')" placement="bottom" effect="dark" v-if="!showFollow">
-            <i class="el-icon-star-off"
-               style="color: #783987; font-size: 25px; margin-right: 5px; position: relative; top: 5px; float: right; cursor: pointer "/>
-          </el-tooltip>
-          <el-tooltip :content="$t('commons.cancel')" placement="bottom" effect="dark" v-if="showFollow">
-            <i class="el-icon-star-on"
-               style="color: #783987; font-size: 28px; margin-right: 5px; position: relative; top: 5px; float: right; cursor: pointer "/>
-          </el-tooltip>
-
-          <br/>
           <ms-form-divider :title="$t('test_track.plan_view.base_info')"/>
 
           <!-- 基础信息 -->
@@ -30,14 +19,14 @@
             <el-row>
               <el-col :span="8">
                 <el-form-item :label="$t('commons.name')" prop="name">
-                  <el-input class="ms-http-input" size="small" v-model="oldData.name"/>
+                  <el-input class="ms-http-input" size="small" v-model="oldData.name" :disabled="true"/>
                 </el-form-item>
               </el-col>
               <el-col :span="16">
                 <el-form-item :label="$t('api_report.request')" prop="path">
-                  <el-input :placeholder="$t('api_test.definition.request.path_info')" v-model="oldData.path"
+                  <el-input :placeholder="$t('api_test.definition.request.path_info')" v-model="oldData.path" :disabled="true"
                             class="ms-http-input" size="small" style="margin-top: 5px" >
-                    <el-select v-model="oldData.method" slot="prepend" style="width: 100px" size="small">
+                    <el-select v-model="oldData.method" slot="prepend" style="width: 100px" size="small" :disabled="true">
                       <el-option v-for="item in reqOptions" :key="item.id" :label="item.label" :value="item.id"/>
                     </el-select>
                   </el-input>
@@ -49,7 +38,7 @@
               <el-col :span="8">
                 <el-form-item :label="$t('api_test.definition.request.responsible')" prop="userId">
                   <el-select v-model="oldData.userId"
-                             :placeholder="$t('api_test.definition.request.responsible')" filterable size="small"
+                             :placeholder="$t('api_test.definition.request.responsible')" filterable size="small" :disabled="true"
                              class="ms-http-select">
                     <el-option
                       v-for="item in maintainerOptions"
@@ -69,7 +58,7 @@
 
               <el-col :span="8">
                 <el-form-item :label="$t('commons.status')" prop="status">
-                  <el-select class="ms-http-select" size="small" v-model="oldData.status">
+                  <el-select class="ms-http-select" size="small" v-model="oldData.status" :disabled="true">
                     <el-option v-for="item in options" :key="item.id" :label="$t(item.label)" :value="item.id"/>
                   </el-select>
                 </el-form-item>
@@ -87,7 +76,7 @@
                             v-model="oldData.description"
                             type="textarea"
                             :autosize="{ minRows: 1, maxRows: 10}"
-                            :rows="1" size="small"/>
+                            :rows="1" size="small" :disabled="true"/>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -141,19 +130,7 @@
 
       </el-card>
       <el-card style="width: 50%;" ref="new">
-        <el-form :model="newData" :rules="rule" ref="httpForm" label-width="80px" label-position="right" :disabled="true">
-          <!-- 操作按钮 -->
-          <el-tooltip :content="$t('commons.follow')" placement="bottom" effect="dark" v-if="!newShowFollow">
-            <i class="el-icon-star-off"
-               style="color: #783987; font-size: 25px; margin-right: 5px; position: relative; top: 5px; float: right; cursor: pointer "/>
-          </el-tooltip>
-          <el-tooltip :content="$t('commons.cancel')" placement="bottom" effect="dark" v-if="newShowFollow">
-            <i class="el-icon-star-on"
-               style="color: #783987; font-size: 28px; margin-right: 5px; position: relative; top: 5px; float: right; cursor: pointer "/>
-          </el-tooltip>
-
-          <br/>
-
+        <el-form :model="newData" :rules="rule" ref="httpForm" label-width="80px" label-position="right" >
           <ms-form-divider :title="$t('test_track.plan_view.base_info')"/>
 
           <!-- 基础信息 -->
@@ -162,14 +139,14 @@
             <el-row>
               <el-col :span="8">
                 <el-form-item :label="$t('commons.name')"  prop="name">
-                  <el-input class="ms-http-input" size="small" v-model="newData.name"/>
+                  <el-input class="ms-http-input" size="small" v-model="newData.name" :disabled="true"/>
                 </el-form-item>
               </el-col>
               <el-col :span="16">
                 <el-form-item :label="$t('api_report.request')" prop="path">
-                  <el-input :placeholder="$t('api_test.definition.request.path_info')" v-model="newData.path"
+                  <el-input :placeholder="$t('api_test.definition.request.path_info')" v-model="newData.path" :disabled="true"
                             class="ms-http-input" size="small" style="margin-top: 5px" >
-                    <el-select v-model="newData.method" slot="prepend" style="width: 100px" size="small">
+                    <el-select v-model="newData.method" slot="prepend" style="width: 100px" size="small" :disabled="true">
                       <el-option v-for="item in reqOptions" :key="item.id" :label="item.label" :value="item.id"/>
                     </el-select>
                   </el-input>
@@ -181,7 +158,7 @@
               <el-col :span="8">
                 <el-form-item :label="$t('api_test.definition.request.responsible')" prop="userId">
                   <el-select v-model="newData.userId"
-                             :placeholder="$t('api_test.definition.request.responsible')" filterable size="small"
+                             :placeholder="$t('api_test.definition.request.responsible')" filterable size="small" :disabled="true"
                              class="ms-http-select">
                     <el-option
                       v-for="item in maintainerOptions"
@@ -201,7 +178,7 @@
 
               <el-col :span="8">
                 <el-form-item :label="$t('commons.status')" prop="status">
-                  <el-select class="ms-http-select" size="small" v-model="newData.status">
+                  <el-select class="ms-http-select" size="small" v-model="newData.status" :disabled="true">
                     <el-option v-for="item in options" :key="item.id" :label="$t(item.label)" :value="item.id"/>
                   </el-select>
                 </el-form-item>
@@ -219,7 +196,7 @@
                             v-model="newData.description"
                             type="textarea"
                             :autosize="{ minRows: 1, maxRows: 10}"
-                            :rows="1" size="small"/>
+                            :rows="1" size="small" :disabled="true"/>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -368,14 +345,25 @@ export default{
       activeName: 'remark',
       relationshipCount: 0,
       oldRelationshipCount: 0,
-      isReloadData:true
+      isReloadData:true,
+      oldColor:"",
+      newColor:""
     }
   },
   methods:{
     getDiff(){
       let oldVnode = this.$refs.old
       let vnode = this.$refs.new
-      diff(oldVnode,vnode);
+      if(this.oldData.createTime>this.newData.createTime){
+        this.oldColor = "rgb(121, 225, 153,0.3)";
+        this.newColor = "rgb(241,200,196,0.45)"
+      }else{
+        this.oldColor = "rgb(241,200,196,0.45)"
+        this.newColor = "rgb(121, 225, 153,0.3)";
+      }
+      console.log(this.$refs.old)
+      console.log(this.$refs.new)
+      diff(oldVnode,vnode,this.oldColor,this.newColor);
       this.isReloadData = false
     },
     setCount(count) {
@@ -391,7 +379,7 @@ export default{
       let oldVnode = this.$refs.oldDependencies
       let vnode = this.$refs.newDependencies
       if(oldVnode._data.postCount>0||oldVnode._data.preCount>0||vnode._data.postCount>0||vnode._data.preCount>0){
-        diff(oldVnode,vnode);
+        diff(oldVnode,vnode,this.oldColor,this.newColor);
       }
 
     }

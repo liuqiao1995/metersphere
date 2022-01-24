@@ -43,7 +43,7 @@
 import NodeEdit from "./NodeEdit";
 import MsNodeTree from "./NodeTree";
 import TestCaseCreate from "@/business/components/track/case/components/TestCaseCreate";
-import TestCaseImport from "@/business/components/track/case/components/TestCaseImport";
+import TestCaseImport from "@/business/components/track/case/components/import/TestCaseImport";
 import TestCaseExport from "@/business/components/track/case/components/TestCaseExport";
 import MsSearchBar from "@/business/components/common/components/search/MsSearchBar";
 import {buildTree} from "../../api/definition/model/NodeTree";
@@ -175,7 +175,9 @@ export default {
       }
     },
     setCurrentKey() {
-      this.$refs.nodeTree.setCurrentKey(this.currentNode);
+      if (this.$refs.nodeTree) {
+        this.$refs.nodeTree.setCurrentKey(this.currentNode);
+      }
     },
     increase(id) {
       this.$refs.nodeTree.increase(id);

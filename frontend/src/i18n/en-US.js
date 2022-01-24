@@ -1283,6 +1283,7 @@ export default {
     automation: {
       open_expansion: "One-click expansion",
       close_expansion: "One-click storage",
+      all: "all",
       constant: "constant",
       counter: "counter",
       random: "random",
@@ -2336,7 +2337,7 @@ export default {
     },
     reporter: 'Reporter',
     lastmodify: 'Last Modify',
-    sync_to_new_version: "Sync to latest version",
+    sync_to_new_version: "Copy to latest version",
   },
   test_resource_pool: {
     id: 'Resource Pool ID',

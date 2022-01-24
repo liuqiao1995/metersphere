@@ -131,8 +131,40 @@ public class ApiDefinitionService {
     public List<ApiDefinitionResult> list(ApiDefinitionRequest request) {
         request = this.initRequest(request, true, true);
         List<ApiDefinitionResult> resList = extApiDefinitionMapper.list(request);
-        calculateResult(resList, request.getProjectId());
+        buildUserInfo(resList);
+        if (StringUtils.isNotBlank(request.getProjectId())) {
+            buildProjectInfo(resList, request.getProjectId());
+            calculateResult(resList, request.getProjectId());
+        }
         return resList;
+    }
+
+    public void buildUserInfo(List<ApiDefinitionResult> apis) {
+        if (CollectionUtils.isEmpty(apis)) {
+            return;
+        }
+        Set<String> userIds = new HashSet<>();
+        apis.forEach(i -> {
+            userIds.add(i.getUserId());
+            userIds.add(i.getDeleteUserId());
+            userIds.add(i.getCreateUser());
+        });
+        if (!org.apache.commons.collections.CollectionUtils.isEmpty(userIds)) {
+            Map<String, String> userMap = ServiceUtils.getUserNameMap(new ArrayList<>(userIds));
+            apis.forEach(caseResult -> {
+                caseResult.setCreateUser(userMap.get(caseResult.getCreateUser()));
+                caseResult.setDeleteUser(userMap.get(caseResult.getDeleteUserId()));
+                caseResult.setUserName(userMap.get(caseResult.getUserId()));
+            });
+        }
+    }
+
+    public void buildProjectInfo(List<ApiDefinitionResult> apis, String projectId) {
+        Project project = projectMapper.selectByPrimaryKey(projectId);
+        apis.forEach(i -> {
+            i.setProjectName(project.getName());
+            i.setVersionEnable(project.getVersionEnable());
+        });
     }
 
     public List<ApiDefinitionResult> weekList(ApiDefinitionRequest request) {
@@ -587,7 +619,18 @@ public class ApiDefinitionService {
             ids.add(request.getId());
             apiTestCaseService.updateByApiDefinitionId(ids, test.getPath(), test.getMethod(), test.getProtocol());
         }
-        return test;
+        //
+        ApiDefinitionWithBLOBs result = apiDefinitionMapper.selectByPrimaryKey(test.getId());
+        checkAndSetLatestVersion(result.getRefId());
+        return result;
+    }
+
+    /**
+     * 检查设置最新版本
+     */
+    private void checkAndSetLatestVersion(String refId) {
+        extApiDefinitionMapper.clearLatestVersion(refId);
+        extApiDefinitionMapper.addLatestVersion(refId);
     }
 
     public void saveFollows(String definitionId, List<String> follows) {
@@ -629,6 +672,7 @@ public class ApiDefinitionService {
         test.setOrder(ServiceUtils.getNextOrder(request.getProjectId(), extApiDefinitionMapper::getLastOrder));
         test.setRefId(request.getId());
         test.setVersionId(request.getVersionId());
+        test.setLatest(true); // 新建一定是最新的
         if (StringUtils.isEmpty(request.getModuleId()) || "default-module".equals(request.getModuleId())) {
             ApiModuleExample example = new ApiModuleExample();
             example.createCriteria().andProjectIdEqualTo(test.getProjectId()).andProtocolEqualTo(test.getProtocol()).andNameEqualTo("未规划接口");
@@ -1057,6 +1101,9 @@ public class ApiDefinitionService {
         ApiDefinitionImport apiImport = null;
         try {
             apiImport = (ApiDefinitionImport) Objects.requireNonNull(runService).parse(file == null ? null : file.getInputStream(), request);
+            if(apiImport.getMocks() == null){
+                apiImport.setMocks(new ArrayList<>());
+            }
         } catch (Exception e) {
             LogUtil.error(e.getMessage(), e);
             String returnThrowException = e.getMessage();
@@ -1117,6 +1164,8 @@ public class ApiDefinitionService {
         List<ApiDefinitionWithBLOBs> data = apiImport.getData();
         ApiDefinitionMapper batchMapper = sqlSession.getMapper(ApiDefinitionMapper.class);
         ApiTestCaseMapper apiTestCaseMapper = sqlSession.getMapper(ApiTestCaseMapper.class);
+        ExtApiDefinitionMapper extApiDefinitionMapper = sqlSession.getMapper(ExtApiDefinitionMapper.class);
+
         Project project = projectMapper.selectByPrimaryKey(request.getProjectId());
         int num = 0;
         if (!CollectionUtils.isEmpty(data) && data.get(0) != null && data.get(0).getProjectId() != null) {
@@ -1124,6 +1173,7 @@ public class ApiDefinitionService {
         }
         for (int i = 0; i < data.size(); i++) {
             ApiDefinitionWithBLOBs item = data.get(i);
+            ApiDefinition result;
             this.setModule(item);
             if (item.getName().length() > 255) {
                 item.setName(item.getName().substring(0, 255));
@@ -1134,15 +1184,18 @@ public class ApiDefinitionService {
                 String apiId = item.getId();
                 EsbApiParamsWithBLOBs model = apiImport.getEsbApiParamsMap().get(apiId);
                 request.setModeId("fullCoverage");//标准版ESB数据导入不区分是否覆盖，默认都为覆盖
-                importCreate(item, batchMapper, apiTestCaseMapper, request, apiImport.getCases(), apiImport.getMocks(), project.getRepeatable());
+                result = importCreate(item, batchMapper, apiTestCaseMapper, request, apiImport.getCases(), apiImport.getMocks(), project.getRepeatable());
                 if (model != null) {
                     apiImport.getEsbApiParamsMap().remove(apiId);
                     model.setResourceId(item.getId());
                     apiImport.getEsbApiParamsMap().put(item.getId(), model);
                 }
             } else {
-                importCreate(item, batchMapper, apiTestCaseMapper, request, apiImport.getCases(), apiImport.getMocks(), project.getRepeatable());
+                result = importCreate(item, batchMapper, apiTestCaseMapper, request, apiImport.getCases(), apiImport.getMocks(), project.getRepeatable());
             }
+            // 导入之后刷新latest
+            extApiDefinitionMapper.clearLatestVersion(result.getRefId());
+            extApiDefinitionMapper.addLatestVersion(result.getRefId());
             if (i % 300 == 0) {
                 sqlSession.flushStatements();
             }
@@ -1750,7 +1803,7 @@ public class ApiDefinitionService {
             List<ApiDefinition> apiDefinitions = apiDefinitionMapper.selectByExample(example);
             Map<String, ApiDefinition> apiMap = apiDefinitions.stream().collect(Collectors.toMap(ApiDefinition::getId, i -> i));
             List<RelationshipEdgeDTO> results = new ArrayList<>();
-            buildUserInfo(apiDefinitions);
+            Map<String, String> userNameMap = ServiceUtils.getUserNameMap(apiDefinitions.stream().map(ApiDefinition::getUserId).collect(Collectors.toList()));
             for (RelationshipEdge relationshipEdge : relationshipEdges) {
                 RelationshipEdgeDTO relationshipEdgeDTO = new RelationshipEdgeDTO();
                 BeanUtils.copyBean(relationshipEdgeDTO, relationshipEdge);
@@ -1764,7 +1817,7 @@ public class ApiDefinitionService {
                     continue;
                 }
                 relationshipEdgeDTO.setTargetName(apiDefinition.getName());
-                relationshipEdgeDTO.setCreator(apiDefinition.getUserId());
+                relationshipEdgeDTO.setCreator(userNameMap.get(apiDefinition.getUserId()));
                 relationshipEdgeDTO.setTargetNum(apiDefinition.getNum());
                 relationshipEdgeDTO.setStatus(apiDefinition.getStatus());
                 relationshipEdgeDTO.setVersionId(apiDefinition.getVersionId());
@@ -1773,21 +1826,6 @@ public class ApiDefinitionService {
             return results;
         }
         return new ArrayList<>();
-    }
-
-    public void buildUserInfo(List<? extends ApiDefinition> apis) {
-        List<String> userIds = new ArrayList();
-        userIds.addAll(apis.stream().map(ApiDefinition::getCreateUser).collect(Collectors.toList()));
-        userIds.addAll(apis.stream().map(ApiDefinition::getDeleteUserId).collect(Collectors.toList()));
-        userIds.addAll(apis.stream().map(ApiDefinition::getUserId).collect(Collectors.toList()));
-        if (!org.apache.commons.collections.CollectionUtils.isEmpty(userIds)) {
-            Map<String, String> userMap = ServiceUtils.getUserNameMap(userIds);
-            apis.forEach(caseResult -> {
-                caseResult.setCreateUser(userMap.get(caseResult.getCreateUser()));
-                caseResult.setDeleteUserId(userMap.get(caseResult.getDeleteUserId()));
-                caseResult.setUserId(userMap.get(caseResult.getUserId()));
-            });
-        }
     }
 
     public Pager<List<ApiDefinitionResult>> getRelationshipRelateList(ApiDefinitionRequest request, int goPage, @PathVariable int pageSize) {
@@ -1878,6 +1916,8 @@ public class ApiDefinitionService {
         apiTestCaseMapper.deleteByExample(apiTestCaseExample);
         //
         apiDefinitionMapper.deleteByExample(example);
+
+        checkAndSetLatestVersion(refId);
     }
 
     public List<ApiDefinitionWithBLOBs> getByIds(List<String> ids) {
@@ -1910,6 +1950,9 @@ public class ApiDefinitionService {
                 api.setModulePath(request.getModulePath());
                 api.setOrder(nextOrder += ServiceUtils.ORDER_STEP);
                 api.setNum(nextNum++);
+                api.setCreateTime(System.currentTimeMillis());
+                api.setUpdateTime(System.currentTimeMillis());
+                api.setRefId(api.getId());
                 mapper.insert(api);
                 if (i % 50 == 0)
                     sqlSession.flushStatements();

@@ -98,15 +98,11 @@
         </ms-table-column>
 
         <ms-table-column
-          prop="createUser"
+          prop="createName"
           :field="item"
           :fields-width="fieldsWidth"
           :label="$t('commons.create_user')"
-          min-width="120">
-          <template v-slot:default="scope">
-            {{ memberMap.get(scope.row.createUser) }}
-          </template>
-        </ms-table-column>
+          min-width="120"/>
 
         <ms-table-column
           prop="reviewStatus"
@@ -144,6 +140,7 @@
         </ms-table-column>
 
         <ms-table-column
+          v-if="versionEnable"
           :label="$t('project.version.name')"
           :field="item"
           :fields-width="fieldsWidth"
@@ -235,7 +232,7 @@
 <script>
 
 import MsTableHeaderSelectPopover from "@/business/components/common/components/table/MsTableHeaderSelectPopover";
-import TestCaseImport from '../components/TestCaseImport';
+import TestCaseImport from './import/TestCaseImport';
 import TestCaseExport from '../components/TestCaseExport';
 import MsTablePagination from '../../../../components/common/pagination/TablePagination';
 import NodeBreadcrumb from '../../common/NodeBreadcrumb';
@@ -493,6 +490,10 @@ export default {
       default: false,
     },
     currentVersion: String,
+    versionEnable: {
+      type: Boolean,
+      default: false
+    }
   },
   computed: {
     projectId() {
@@ -1157,6 +1158,8 @@ export default {
     copyPublic(param) {
       param.condition = this.condition;
       param.projectId = this.projectId;
+      param.condition.projectId = null;
+      param.condition.ids = null;
       this.page.result = this.$post('/test/case/batch/copy/public', param, () => {
         this.$success(this.$t('commons.save_success'));
         this.$refs.testBatchMove.close();

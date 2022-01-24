@@ -351,7 +351,12 @@ public class ApiScenarioReportService {
             scenario = apiScenarioMapper.selectByPrimaryKey(report.getScenarioId());
         }
         if (scenario != null) {
-            scenario.setLastResult(errorSize > 0 ? "Fail" : ScenarioStatus.Success.name());
+            if(StringUtils.equalsAnyIgnoreCase(status,ExecuteResult.errorReportResult.name())){
+                scenario.setLastResult(status);
+            }else {
+                scenario.setLastResult(errorSize > 0 ? "Fail" : ScenarioStatus.Success.name());
+            }
+
             long successSize = requestResults.stream().filter(requestResult -> StringUtils.equalsIgnoreCase(requestResult.getStatus(), ScenarioStatus.Success.name())).count();
             scenario.setPassRate(new DecimalFormat("0%").format((float) successSize / requestResults.size()));
             scenario.setReportId(dto.getReportId());
@@ -731,10 +736,12 @@ public class ApiScenarioReportService {
             }
         }
         String status;//增加误报状态判断
-        if(errorReportResultSize > 0){
+        if(errorSize > 0){
+            status = ScenarioStatus.Error.name();
+        }else if(errorReportResultSize > 0){
             status = ExecuteResult.errorReportResult.name();
         }else {
-            status =errorSize > 0 || requestResults.isEmpty() ? ScenarioStatus.Error.name() : ScenarioStatus.Success.name();
+            status = ScenarioStatus.Success.name();
         }
 
         if (dto != null && dto.getArbitraryData() != null && dto.getArbitraryData().containsKey("TIMEOUT") && (Boolean) dto.getArbitraryData().get("TIMEOUT")) {

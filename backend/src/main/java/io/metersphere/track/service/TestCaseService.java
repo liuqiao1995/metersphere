@@ -251,11 +251,16 @@ public class TestCaseService {
     }
 
     private void checkCustomNumExist(TestCaseWithBLOBs testCase) {
+        String id = testCase.getId();
+        TestCaseWithBLOBs testCaseWithBLOBs = testCaseMapper.selectByPrimaryKey(id);
         TestCaseExample example = new TestCaseExample();
-        example.createCriteria()
-                .andCustomNumEqualTo(testCase.getCustomNum())
+        TestCaseExample.Criteria criteria = example.createCriteria();
+        criteria.andCustomNumEqualTo(testCase.getCustomNum())
                 .andProjectIdEqualTo(testCase.getProjectId())
                 .andIdNotEqualTo(testCase.getId());
+        if (testCaseWithBLOBs != null && StringUtils.isNotBlank(testCaseWithBLOBs.getRefId())) {
+            criteria.andRefIdNotEqualTo(testCaseWithBLOBs.getRefId());
+        }
         List<TestCase> list = testCaseMapper.selectByExample(example);
         if (CollectionUtils.isNotEmpty(list)) {
             MSException.throwException(Translator.get("custom_num_is_exist"));
@@ -282,6 +287,19 @@ public class TestCaseService {
             example.getOredCriteria().get(0).andVersionIdEqualTo(testCase.getVersionId());
         }
         createNewVersionOrNot(testCase, example);
+
+        if (StringUtils.isNotBlank(testCase.getCustomNum()) && StringUtils.isNotBlank(testCase.getId())) {
+            TestCaseWithBLOBs caseWithBLOBs = testCaseMapper.selectByPrimaryKey(testCase.getId());
+            if (caseWithBLOBs != null) {
+                example.clear();
+                example.createCriteria().andRefIdEqualTo(caseWithBLOBs.getRefId());
+                TestCaseWithBLOBs testCaseWithBLOBs = new TestCaseWithBLOBs();
+                testCaseWithBLOBs.setCustomNum(testCase.getCustomNum());
+                testCaseMapper.updateByExampleSelective(testCaseWithBLOBs, example);
+            }
+        }
+
+        testCase.setLatest(null);
         testCaseMapper.updateByPrimaryKeySelective(testCase);
         return testCaseMapper.selectByPrimaryKey(testCase.getId());
     }
@@ -306,8 +324,8 @@ public class TestCaseService {
             testCase.setLatest(false);
             DealWithOtherInfo(testCase, oldTestCase.getId());
             testCaseMapper.insertSelective(testCase);
+            checkAndSetLatestVersion(testCase.getRefId(), testCase.getVersionId(), testCase.getProjectId(), "add");
         }
-        checkAndSetLatestVersion(testCase.getRefId(), testCase.getVersionId(), testCase.getProjectId());
     }
 
     /**
@@ -1028,7 +1046,7 @@ public class TestCaseService {
             sqlSession.flushStatements();
 
             insertCases.forEach(item -> {
-                checkAndSetLatestVersion(item.getRefId(), request.getVersionId(), request.getProjectId());
+                checkAndSetLatestVersion(item.getRefId(), request.getVersionId(), request.getProjectId(), "add");
             });
         } catch (Exception e) {
             LogUtil.error(e);
@@ -1772,15 +1790,6 @@ public class TestCaseService {
         return request.getId();
     }
 
-    public List<TestCaseDTO> listTestCaseIds(QueryTestCaseRequest request) {
-        setDefaultOrder(request);
-        List<String> selectFields = new ArrayList<>();
-        selectFields.add("test_case.id");
-        selectFields.add("test_case.name");
-        request.setSelectFields(selectFields);
-        return extTestCaseMapper.listIds(request);
-    }
-
     public void minderEdit(TestCaseMinderEditRequest request) {
 
         deleteToGcBatch(request.getIds());
@@ -2440,9 +2449,9 @@ public class TestCaseService {
         List<TestCaseWithBLOBs> testCaseList = testCaseMapper.selectByExampleWithBLOBs(e);
         if (CollectionUtils.isNotEmpty(testCaseList)) {
             testCaseMapper.deleteByExample(e);
+            //检查最新版本
+            checkAndSetLatestVersion(refId, version, testCaseList.get(0).getProjectId(), "del");
         }
-        //检查最新版本
-        checkAndSetLatestVersion(refId, version, testCaseList.get(0).getProjectId());
     }
 
     /**
@@ -2451,20 +2460,59 @@ public class TestCaseService {
      * @param refId
      * @param versionId
      */
-    private void checkAndSetLatestVersion(String refId, String versionId, String projectId) {
-        TestCaseExample e = new TestCaseExample();
-        e.createCriteria().andRefIdEqualTo(refId).andLatestEqualTo(true);
-        //如果因为删除导致没有了最新的版本，则按照版本创建顺序选择一个版本为最新版本
-        if (testCaseMapper.countByExample(e) == 0) {
-            extTestCaseMapper.addLatestVersion(refId);
-        } else {
-            //已经存在了最新版本 但是要判断这个所谓的最新版本是否是版本管理里面最新版本
+    private void checkAndSetLatestVersion(String refId, String versionId, String projectId, String opt) {
+        if (StringUtils.isAnyBlank(refId, versionId, projectId))
+            return;
+        if (StringUtils.equalsAnyIgnoreCase("add", opt)) {
             String latestVersion = extProjectVersionMapper.getDefaultVersion(projectId);
             if (StringUtils.equals(versionId, latestVersion)) {
-                extTestCaseMapper.clearLatestVersion(refId, projectId);
-                extTestCaseMapper.setLatestVersion(refId, versionId);
+                TestCaseExample e = new TestCaseExample();
+                e.createCriteria().andRefIdEqualTo(refId).andVersionIdEqualTo(versionId);
+                List<String> changeToLatestIds = testCaseMapper.selectByExample(e).stream().map(TestCase::getId).collect(Collectors.toList());
+                //如果是最新版本
+                TestCaseWithBLOBs t = new TestCaseWithBLOBs();
+                t.setLatest(true);
+                testCaseMapper.updateByExampleSelective(t, e);
+
+                if (CollectionUtils.isNotEmpty(changeToLatestIds)) {
+                    e.clear();
+                    e.createCriteria().andRefIdEqualTo(refId).andIdNotIn(changeToLatestIds);
+                    t.setLatest(false);
+                    testCaseMapper.updateByExampleSelective(t, e);
+                }
+            }
+        } else if (StringUtils.equalsIgnoreCase("del", opt)) {
+            //删掉该版本数据
+            TestCaseExample e = new TestCaseExample();
+            e.createCriteria().andRefIdEqualTo(refId).andLatestEqualTo(true);
+            if (testCaseMapper.countByExample(e) == 0) {
+                //删掉最新版本的数据
+                e.clear();
+                e.createCriteria().andRefIdEqualTo(refId).andVersionIdNotEqualTo(versionId);
+                List<TestCase> differentVersionData = testCaseMapper.selectByExample(e);
+                if (differentVersionData.size() != 0) {
+                    ProjectVersionExample pe = new ProjectVersionExample();
+                    pe.createCriteria().andProjectIdEqualTo(projectId);
+                    pe.setOrderByClause("create_time desc");
+                    List<ProjectVersion> versionList = projectVersionMapper.selectByExample(pe);
+                    TestCase latestData = null;
+                    for (ProjectVersion projectVersion : versionList) {
+                        for (TestCase t : differentVersionData)
+                            if (projectVersion.getId().equalsIgnoreCase(t.getVersionId())) {
+                                latestData = t;
+                                break;
+                            }
+                        if (latestData != null)
+                            break;
+                    }
+                    if (latestData == null)
+                        latestData = differentVersionData.get(0);
+                    latestData.setLatest(true);
+                    testCaseMapper.updateByPrimaryKey(latestData);
+                }
             }
         }
+
     }
 
     public void deleteTestCasePublic(String versionId, String refId) {

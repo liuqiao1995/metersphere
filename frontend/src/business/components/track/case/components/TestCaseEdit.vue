@@ -299,8 +299,6 @@ export default {
         {value: 'manual', label: this.$t('test_track.case.manual')}
       ],
       testCase: {},
-      testCases: [],
-      index: 0,
       showInputTag: true,
       tableType: "",
       stepFilter: new STEP,
@@ -602,7 +600,7 @@ export default {
           this.customFieldForm = parseCustomField(this.form, this.testCaseTemplate, this.customFieldRules, buildTestCaseOldFields(this.form));
           this.reload();
         } else {
-          this.initTestCases(testCase);
+          this.getTestCase(testCase.id);
         }
       } else {
         if (this.selectNode.data) {
@@ -629,40 +627,10 @@ export default {
         this.getComments(this.currentTestCaseInfo);
       }
     },
-    handlePre() {
-      this.index--;
-      this.getTestCase(this.index)
-    },
-    handleNext() {
-      this.index++;
-      this.getTestCase(this.index);
-    },
-    initTestCases(testCase) {
-      if (this.publicEnable) {
-        this.selectCondition.projectId = null;
-      } else {
-        this.selectCondition.workspaceId = null;
-      }
-      this.selectCondition.versionId = testCase.versionId
-        this.result = this.$post('/test/case/list/ids', this.selectCondition, response => {
-          this.testCases = response.data;
-          for (let i = 0; i < this.testCases.length; i++) {
-            if (this.testCases[i].id === testCase.id) {
-              this.index = i;
-              this.getTestCase(i);
-            }
-          }
-        });
-    },
-    getTestCase(index) {
-      let id = "";
+    getTestCase(id) {
       this.showInputTag = false;
-      let testCase = this.testCases[index];
-      if (typeof (index) == "undefined") {
+      if (!id) {
         id = this.currentTestCaseInfo.id;
-
-      } else {
-        id = testCase.id;
       }
       this.result = this.$get('/test/case/get/' + id, response => {
         if (response.data) {
@@ -963,10 +931,10 @@ export default {
       });
     },
     setSpecialPropForCompare: function (that) {
-      that.newData.tags = JSON.parse(that.newData.tags || "");
-      that.newData.steps = JSON.parse(that.newData.steps || "");
-      that.oldData.tags = JSON.parse(that.oldData.tags || "");
-      that.oldData.steps = JSON.parse(that.oldData.steps || "");
+      that.newData.tags = JSON.parse(that.newData.tags || "{}");
+      that.newData.steps = JSON.parse(that.newData.steps || "{}");
+      that.oldData.tags = JSON.parse(that.oldData.tags || "{}");
+      that.oldData.steps = JSON.parse(that.oldData.steps || "{}");
       that.newData.readOnly = true;
       that.oldData.readOnly = true;
     },
@@ -979,9 +947,9 @@ export default {
           if (data[0] && data[1]) {
             that.newData = data[0].data.data;
             that.oldData = data[1].data.data;
-            let testCase = this.versionData.filter(v => v.versionId === this.currentTestCaseInfo.versionId)[0];
-            that.newData.versionName = response.data.versionName
-            that.oldData.versionName = testCase.versionName
+            let testCase = that.versionData.filter(v => v.versionId === this.currentTestCaseInfo.versionId)[0];
+            that.newData.versionName = that.versionData.filter(v => v.id === that.newData.id)[0].versionName;
+            that.oldData.versionName = that.versionData.filter(v => v.id === that.oldData.id)[0].versionName;
             that.newData.userName = response.data.createName
             that.oldData.userName = testCase.createName
             this.setSpecialPropForCompare(that);

@@ -894,7 +894,7 @@
         WHERE ref_id = #{refId,jdbcType=VARCHAR}
         LIMIT 1
         )
-        UNION
+        UNION ALL
         (
         SELECT tmp.id
         FROM api_definition tmp
@@ -914,5 +914,16 @@
         ORDER BY tmp.update_time DESC
         LIMIT 1)) AS t ON api_definition.id = t.id
         SET api_definition.latest = TRUE
+        WHERE ref_id = #{refId,jdbcType=VARCHAR}
     </update>
+
+    <select id="selectRefIdsForVersionChange" resultType="java.lang.String">
+        SELECT DISTINCT ref_id
+        FROM api_definition
+        WHERE ref_id NOT IN (
+                SELECT DISTINCT ref_id
+                FROM api_definition
+                WHERE version_id = #{versionId} AND project_id = #{projectId}
+        ) AND project_id = #{projectId}
+    </select>
 </mapper>

@@ -36,7 +36,7 @@
                         @pre="handlePre"
                         @next="saveCase(true, true)"
                         :list="testCases"/>
-                      <el-button class="save-btn" type="primary" size="mini" :disabled="isReadOnly" @click="saveCase(true)">
+                      <el-button class="save-btn" type="primary" size="mini" :disabled="statusReadOnly" @click="saveCase(true)">
                         {{$t('test_track.save')}} & {{$t('test_track.next')}}
                       </el-button>
                     </el-col>
@@ -93,7 +93,7 @@
                                          :title="$t('test_track.case.prerequisite')" :data="testCase"
                                          prop="prerequisite"/>
                     <step-change-item :disable="true" :label-width="formLabelWidth" :form="testCase"/>
-                    <test-plan-case-step-results-item :label-width="formLabelWidth" :is-read-only="isReadOnly"
+                    <test-plan-case-step-results-item :label-width="formLabelWidth" :is-read-only="statusReadOnly"
                                                       v-if="testCase.stepModel === 'STEP'" :test-case="testCase"/>
                     <form-rich-text-item :label-width="formLabelWidth" v-if="testCase.stepModel === 'TEXT'"
                                          :disabled="true" :title="$t('test_track.case.step_desc')" :data="testCase"

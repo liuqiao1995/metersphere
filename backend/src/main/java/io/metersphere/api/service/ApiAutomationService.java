@@ -138,6 +138,7 @@ public class ApiAutomationService {
     @Resource
     private ExtProjectVersionMapper extProjectVersionMapper;
 
+
     private ThreadLocal<Long> currentScenarioOrder = new ThreadLocal<>();
 
     public ApiScenarioDTO getDto(String id) {
@@ -469,13 +470,7 @@ public class ApiAutomationService {
         }
 
         if (StringUtils.isEmpty(request.getApiScenarioModuleId()) || "default-module".equals(request.getApiScenarioModuleId())) {
-            ApiScenarioModuleExample example = new ApiScenarioModuleExample();
-            example.createCriteria().andProjectIdEqualTo(request.getProjectId()).andNameEqualTo("未规划场景");
-            List<ApiScenarioModule> modules = apiScenarioModuleMapper.selectByExample(example);
-            if (CollectionUtils.isNotEmpty(modules)) {
-                scenario.setApiScenarioModuleId(modules.get(0).getId());
-                scenario.setModulePath(modules.get(0).getName());
-            }
+            replenishScenarioModuleIdPath(request.getProjectId(), apiScenarioModuleMapper, scenario);
         }
         saveFollows(scenario.getId(), request.getFollows());
         if (StringUtils.isEmpty(request.getVersionId())) {
@@ -719,16 +714,17 @@ public class ApiAutomationService {
         if (StringUtils.equalsIgnoreCase(element.getString("refType"), "CASE")) {
             ApiTestCaseInfo apiTestCase = apiTestCaseService.get(element.getString("id"));
             if (apiTestCase != null) {
-                JSONObject refElement = JSON.parseObject(apiTestCase.getRequest());
-                ElementUtil.dataFormatting(refElement);
                 if (StringUtils.equalsIgnoreCase(element.getString("referenced"), "REF")) {
-                    if (refElement.get("hashTree") != null) {
+                    JSONObject refElement = JSON.parseObject(apiTestCase.getRequest());
+                    ElementUtil.dataFormatting(refElement);
+                    JSONArray array = refElement.getJSONArray("hashTree");
+                    BeanUtils.copyBean(element, refElement);
+                    if (array != null) {
                         ElementUtil.mergeHashTree(element, refElement.getJSONArray("hashTree"));
                     }
                     element.put("referenced", "REF");
+                    element.put("disabled", true);
                     element.put("name", apiTestCase.getName());
-                } else {
-                    element = refElement;
                 }
                 element.put("id", apiTestCase.getId());
                 isExist = true;
@@ -1144,10 +1140,8 @@ public class ApiAutomationService {
     public JmxInfoDTO genPerformanceTestJmx(GenScenarioRequest request) {
         List<String> ids = request.getIds();
         List<ApiScenarioDTO> apiScenarios = extApiScenarioMapper.selectIds(ids);
-        String testName = "";
         String id = "";
         if (!apiScenarios.isEmpty()) {
-            testName = apiScenarios.get(0).getName();
             id = apiScenarios.get(0).getId();
         }
         if (CollectionUtils.isEmpty(apiScenarios)) {
@@ -1220,8 +1214,8 @@ public class ApiAutomationService {
         return apiScenarioMapper.selectByExampleWithBLOBs(example);
     }
 
-    private void _importCreate(List<ApiScenarioWithBLOBs> sameRequest, ApiScenarioMapper batchMapper, ApiScenarioWithBLOBs scenarioWithBLOBs, ApiTestImportRequest apiTestImportRequest) {
-        String defaultVersion = extProjectVersionMapper.getDefaultVersion(apiTestImportRequest.getProjectId());
+    private void _importCreate(List<ApiScenarioWithBLOBs> sameRequest, ApiScenarioMapper batchMapper, ExtApiScenarioMapper extApiScenarioMapper,
+                               ApiScenarioWithBLOBs scenarioWithBLOBs, ApiTestImportRequest apiTestImportRequest) {
         if (CollectionUtils.isEmpty(sameRequest)) {
             scenarioWithBLOBs.setId(UUID.randomUUID().toString());
             List<ApiMethodUrlDTO> useUrl = this.parseUrl(scenarioWithBLOBs);
@@ -1232,14 +1226,15 @@ public class ApiAutomationService {
             if (StringUtils.isNotEmpty(apiTestImportRequest.getVersionId())) {
                 scenarioWithBLOBs.setVersionId(apiTestImportRequest.getVersionId());
             } else {
-                scenarioWithBLOBs.setVersionId(defaultVersion);
+                scenarioWithBLOBs.setVersionId(apiTestImportRequest.getDefaultVersion());
             }
+            scenarioWithBLOBs.setLatest(true);
             batchMapper.insert(scenarioWithBLOBs);
             apiScenarioReferenceIdService.saveByApiScenario(scenarioWithBLOBs);
         } else {
             //如果存在则修改
             if (StringUtils.isEmpty(apiTestImportRequest.getUpdateVersionId())) {
-                apiTestImportRequest.setUpdateVersionId(defaultVersion);
+                apiTestImportRequest.setUpdateVersionId(apiTestImportRequest.getDefaultVersion());
             }
             Optional<ApiScenarioWithBLOBs> scenarioOp = sameRequest.stream()
                     .filter(api -> StringUtils.equals(api.getVersionId(), apiTestImportRequest.getUpdateVersionId()))
@@ -1265,10 +1260,13 @@ public class ApiAutomationService {
                 batchMapper.updateByPrimaryKeyWithBLOBs(scenarioWithBLOBs);
             }
             apiScenarioReferenceIdService.saveByApiScenario(scenarioWithBLOBs);
+            extApiScenarioMapper.clearLatestVersion(scenarioWithBLOBs.getRefId());
+            extApiScenarioMapper.addLatestVersion(scenarioWithBLOBs.getRefId());
         }
     }
 
-    private ApiScenarioWithBLOBs importCreate(ApiScenarioWithBLOBs request, ApiScenarioMapper batchMapper, ApiTestImportRequest apiTestImportRequest) {
+    private ApiScenarioWithBLOBs importCreate(ApiScenarioWithBLOBs request, ApiScenarioMapper batchMapper, ExtApiScenarioMapper extApiScenarioMapper,
+                                              ApiTestImportRequest apiTestImportRequest) {
         final ApiScenarioWithBLOBs scenarioWithBLOBs = new ApiScenarioWithBLOBs();
         BeanUtils.copyBean(scenarioWithBLOBs, request);
         scenarioWithBLOBs.setCreateTime(System.currentTimeMillis());
@@ -1317,7 +1315,7 @@ public class ApiAutomationService {
         }
 
         if (StringUtils.equals("fullCoverage", apiTestImportRequest.getModeId())) {
-            _importCreate(sameRequest, batchMapper, scenarioWithBLOBs, apiTestImportRequest);
+            _importCreate(sameRequest, batchMapper, extApiScenarioMapper, scenarioWithBLOBs, apiTestImportRequest);
         } else if (StringUtils.equals("incrementalMerge", apiTestImportRequest.getModeId())) {
             if (CollectionUtils.isEmpty(sameRequest)) {
                 List<ApiMethodUrlDTO> useUrl = this.parseUrl(scenarioWithBLOBs);
@@ -1328,9 +1326,9 @@ public class ApiAutomationService {
                 if (StringUtils.isNotEmpty(apiTestImportRequest.getVersionId())) {
                     scenarioWithBLOBs.setVersionId(apiTestImportRequest.getVersionId());
                 } else {
-                    String defaultVersion = extProjectVersionMapper.getDefaultVersion(apiTestImportRequest.getProjectId());
-                    scenarioWithBLOBs.setVersionId(defaultVersion);
+                    scenarioWithBLOBs.setVersionId(apiTestImportRequest.getDefaultVersion());
                 }
+                scenarioWithBLOBs.setLatest(true);
                 batchMapper.insert(scenarioWithBLOBs);
 
                 // 存储依赖关系
@@ -1342,7 +1340,7 @@ public class ApiAutomationService {
             }
 
         } else {
-            _importCreate(sameRequest, batchMapper, scenarioWithBLOBs, apiTestImportRequest);
+            _importCreate(sameRequest, batchMapper, extApiScenarioMapper, scenarioWithBLOBs, apiTestImportRequest);
         }
         return scenarioWithBLOBs;
     }
@@ -1360,8 +1358,17 @@ public class ApiAutomationService {
             num = getNextNum(data.get(0).getProjectId());
             request.setOpenCustomNum(project.getScenarioCustomNum());
         }
+        String defaultVersion = extProjectVersionMapper.getDefaultVersion(request.getProjectId());
+        request.setDefaultVersion(defaultVersion);
         for (int i = 0; i < data.size(); i++) {
             ApiScenarioWithBLOBs item = data.get(i);
+            if (StringUtils.isBlank(item.getApiScenarioModuleId()) || "default-module".equals(item.getApiScenarioModuleId())) {
+                replenishScenarioModuleIdPath(request.getProjectId(), apiScenarioModuleMapper, item);
+            }
+
+            if (StringUtils.isBlank(item.getCreateUser())) {
+                item.setCreateUser(SessionUtils.getUserId());
+            }
             if (item.getName().length() > 255) {
                 item.setName(item.getName().substring(0, 255));
             }
@@ -1379,9 +1386,7 @@ public class ApiAutomationService {
                 item.setId(UUID.randomUUID().toString());
             }
             // 导入之后刷新latest
-            ApiScenarioWithBLOBs result = importCreate(item, batchMapper, request);
-            extApiScenarioMapper.clearLatestVersion(result.getRefId());
-            extApiScenarioMapper.addLatestVersion(result.getRefId());
+            importCreate(item, batchMapper, extApiScenarioMapper, request);
             if (i % 300 == 0) {
                 sqlSession.flushStatements();
             }
@@ -1389,6 +1394,16 @@ public class ApiAutomationService {
         sqlSession.flushStatements();
         if (sqlSession != null && sqlSessionFactory != null) {
             SqlSessionUtils.closeSqlSession(sqlSession, sqlSessionFactory);
+        }
+    }
+
+    private void replenishScenarioModuleIdPath(String request, ApiScenarioModuleMapper apiScenarioModuleMapper, ApiScenarioWithBLOBs item) {
+        ApiScenarioModuleExample example = new ApiScenarioModuleExample();
+        example.createCriteria().andProjectIdEqualTo(request).andNameEqualTo("未规划场景");
+        List<ApiScenarioModule> modules = apiScenarioModuleMapper.selectByExample(example);
+        if (CollectionUtils.isNotEmpty(modules)) {
+            item.setApiScenarioModuleId(modules.get(0).getId());
+            item.setModulePath(modules.get(0).getName());
         }
     }
 
@@ -1601,7 +1616,21 @@ public class ApiAutomationService {
     public void deleteBatchByCondition(ApiScenarioBatchRequest request) {
         ServiceUtils.getSelectAllIds(request, request.getCondition(),
                 (query) -> extApiScenarioMapper.selectIdsByQuery(query));
-        this.deleteBatch(request.getIds());
+        List<String> ids = request.getIds();
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        ids.forEach(id -> {
+            ApiScenarioWithBLOBs scenario = apiScenarioMapper.selectByPrimaryKey(id);
+            if (scenario == null) {
+                return;
+            }
+            ApiScenarioExample example = new ApiScenarioExample();
+            example.createCriteria().andRefIdEqualTo(scenario.getRefId());
+            List<ApiScenario> apiScenarios = apiScenarioMapper.selectByExample(example);
+            List<String> apiIds = apiScenarios.stream().map(ApiScenario::getId).collect(Collectors.toList());
+            this.deleteBatch(apiIds);
+        });
     }
 
     /**
@@ -1760,33 +1789,6 @@ public class ApiAutomationService {
         }
         return returnList;
     }
-
-
-    private void addUrlAndIdToList(String scenarioDefiniton, List<String> urlList, List<String> idList) {
-        try {
-            JSONObject scenarioObj = JSONObject.parseObject(scenarioDefiniton);
-            if (scenarioObj.containsKey("hashTree")) {
-                JSONArray hashArr = scenarioObj.getJSONArray("hashTree");
-                for (int i = 0; i < hashArr.size(); i++) {
-                    JSONObject elementObj = hashArr.getJSONObject(i);
-                    if (elementObj.containsKey("id")) {
-                        String id = elementObj.getString("id");
-                        idList.add(id);
-                    }
-                    if (elementObj.containsKey("url")) {
-                        String url = elementObj.getString("url");
-                        urlList.add(url);
-                    }
-                    if (elementObj.containsKey("path")) {
-                        String path = elementObj.getString("path");
-                        urlList.add(path);
-                    }
-                }
-            }
-        } catch (Exception e) {
-        }
-    }
-
 
     public ScenarioEnv getApiScenarioProjectId(String id) {
         ApiScenarioWithBLOBs scenario = apiScenarioMapper.selectByPrimaryKey(id);
@@ -1961,6 +1963,7 @@ public class ApiAutomationService {
                 api.setUpdateTime(System.currentTimeMillis());
                 api.setRefId(api.getId());
                 api.setNum(nextNum++);
+                api.setCustomNum(String.valueOf(api.getNum()));
                 mapper.insert(api);
                 if (i % 50 == 0)
                     sqlSession.flushStatements();
@@ -2145,14 +2148,26 @@ public class ApiAutomationService {
     public List<String> getProjects(RunScenarioRequest request) {
         ServiceUtils.getSelectAllIds(request, request.getCondition(),
                 (query) -> extApiScenarioMapper.selectIdsByQuery(query));
+
         List<String> ids = request.getIds();
         ApiScenarioExample example = new ApiScenarioExample();
         example.createCriteria().andIdIn(ids);
-        List<ApiScenario> apiScenarios = apiScenarioMapper.selectByExample(example);
+        List<ApiScenarioWithBLOBs> apiScenarios = apiScenarioMapper.selectByExampleWithBLOBs(example);
+
         List<String> strings = new LinkedList<>();
         apiScenarios.forEach(item -> {
-            if (!strings.contains(item.getProjectId())) {
-                strings.add(item.getProjectId());
+            if (StringUtils.isNotEmpty(item.getScenarioDefinition())) {
+                ScenarioEnv env = getApiScenarioEnv(item.getScenarioDefinition());
+                if (!strings.contains(item.getProjectId())) {
+                    strings.add(item.getProjectId());
+                }
+                if (env != null && CollectionUtils.isNotEmpty(env.getProjectIds())) {
+                    env.getProjectIds().forEach(projectId -> {
+                        if (!strings.contains(projectId)) {
+                            strings.add(projectId);
+                        }
+                    });
+                }
             }
         });
         return strings;

@@ -1461,6 +1461,7 @@ export default {
       parameters_advance_add_func: "添加函數",
       parameters_advance_add_func_limit: "最多支持5個函數",
       parameters_advance_add_func_error: "請先選擇函數",
+      parameters_advance_add_mock_error: "請先選擇mock數據",
       parameters_advance_add_param_error: "請輸入函數參數",
       parameters_desc: "參數追加到URL，例如https://fit2cloud.com/entries?key1=Value1&Key2=Value2",
       headers: "請求頭",
@@ -1689,7 +1690,7 @@ export default {
       import_version: '導入版本',
       data_update_version: '數據更新版本',
       data_new_version: '數據創建版本',
-      current_version: '當前版本',
+      latest_version: '最新版本',
     },
     home_page: {
       unit_of_measurement: "個",
@@ -2037,6 +2038,7 @@ export default {
         import_update: "導入更新",
         import_tip1: "項目設置中「測試用例自定義ID」 開關開啟時ID為必填項",
         import_tip2: "導入更新時ID為必填項",
+        import_file_tips: "請先上傳文件！",
       },
       export: {
         export: "導出用例",

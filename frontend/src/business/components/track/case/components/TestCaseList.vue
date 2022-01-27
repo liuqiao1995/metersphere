@@ -804,6 +804,7 @@ export default {
         } else {
           this.$get('test/case/get/' + testCase.id, response => {
             let testCase = response.data;
+            testCase.trashEnable = this.trashEnable;
             this.$emit('testCaseEdit', testCase);
           });
         }
@@ -896,8 +897,21 @@ export default {
       });
     },
     handleDeleteToGc(testCase) {
-        // 删除提供列表删除和全部版本删除
-        this.$refs.apiDeleteConfirm.open(testCase, this.$t('test_track.case.delete_confirm'));
+      this.$get('/test/case/versions/' + testCase.id, response => {
+        if (hasLicense() && this.versionEnable && response.data.length > 1) {
+          // 删除提供列表删除和全部版本删除
+          this.$refs.apiDeleteConfirm.open(testCase, this.$t('test_track.case.delete_confirm'));
+        } else {
+          this.$alert(this.$t('test_track.case.delete_confirm') + '\'' + testCase.name + '\'' + "？", '', {
+            confirmButtonText: this.$t('commons.confirm'),
+            callback: (action) => {
+              if (action === 'confirm') {
+                this._handleDeleteVersion(testCase, false);
+              }
+            }
+          });
+        }
+      });
     },
     batchReduction() {
       let param = buildBatchParam(this, this.$refs.table.selectIds);
@@ -1059,7 +1073,7 @@ export default {
     },
     handleBatchEdit() {
       this.getMaintainerOptions();
-      this.$refs.batchEdit.open(this.$refs.table.selectRows.size);
+      this.$refs.batchEdit.open(this.condition.selectAll ? this.page.total : this.$refs.table.selectRows.size);
     },
     handleBatchAddPublic() {
       this.$get('/project/get/' + getCurrentProjectID(), res => {

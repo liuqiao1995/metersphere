@@ -511,6 +511,10 @@
         }
       },
       addFunc() {
+        if(this.itemValue == undefined || this.itemValue == null){
+          this.$warning(this.$t('api_test.request.parameters_advance_add_mock_error'));
+          return;
+        }
         if(this.itemValue.indexOf('@') == -1){
           this.itemValue = '@' + this.itemValue;
         } else {
@@ -544,6 +548,9 @@
           this.$set(this.currentItem, 'value', '@' + this.itemValue);
         } else {
           this.$set(this.currentItem, 'value', this.itemValue);
+          if(this.currentItem.mock != undefined){
+            this.$set(this.currentItem, 'mock', this.itemValue);
+          }
         }
         this.itemValueVisible = false;
         this.mockVariableFuncs = [];

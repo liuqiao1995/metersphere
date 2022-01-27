@@ -47,7 +47,7 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
     /**
      * 每隔2000条存储数据库，然后清理list ，方便内存回收
      */
-    protected static final int BATCH_COUNT = 2000;
+    protected static final int BATCH_COUNT = 5000;
 
     private TestCaseService testCaseService;
 
@@ -158,7 +158,7 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
             if (data.getCustomNum() == null) {
                 stringBuilder.append(Translator.get("id_required") + ";");
             } else {
-                String customId = data.getCustomNum().toString();
+                String customId = data.getCustomNum();
                 if (StringUtils.isEmpty(customId)) {
                     stringBuilder.append(Translator.get("id_required") + ";");
                 } else if (customIds.contains(customId)) {
@@ -210,6 +210,9 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
                 String value = null;
                 if (StringUtils.equals(customName, "status")) {
                     value = data.getStatus();
+                    if (!checkCaseStatus(value)){
+                        stringBuilder.append(Translator.get("case_status_not_exist") + "; ");
+                    }
                 }else if (StringUtils.equals(customName, "priority")) {
                     value = data.getPriority();
                 }else if (StringUtils.equals(customName, "maintainer")) {
@@ -359,6 +362,21 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
 
     }
 
+    /**
+     * 检验导入功能用例的状态
+     * @param status
+     * @return
+     */
+    private boolean checkCaseStatus(String status){
+        if (StringUtils.equalsAnyIgnoreCase(status, "Underway", "进行中", "進行中")) {
+            return true;
+        } else if (StringUtils.equalsAnyIgnoreCase(status, "Prepare", "未开始", "未開始")) {
+            return true;
+        } else if (StringUtils.equalsAnyIgnoreCase(status, "Completed", "已完成", "已完成")) {
+            return true;
+        }
+        return false;
+    }
 
     private TestCaseWithBLOBs convert2TestCase(TestCaseExcelData data) {
         TestCaseWithBLOBs testCase = new TestCaseWithBLOBs();
@@ -388,11 +406,11 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
 
         JSONArray customArr = new JSONArray();
         String caseStatusValue = "";
-        if (StringUtils.equalsAny(data.getStatus(), "Underway","underway", "进行中", "進行中")) {
+        if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Underway", "进行中", "進行中")) {
             caseStatusValue = "Underway";
-        } else if (StringUtils.equalsAny(data.getStatus(), "Prepare","prepare", "未开始", "未開始")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Prepare", "未开始", "未開始")) {
             caseStatusValue = "Prepare";
-        } else if (StringUtils.equalsAny(data.getStatus(), "Completed", "completed","已完成", "已完成")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Completed","已完成", "已完成")) {
             caseStatusValue = "Completed";
         }
         data.setStatus(caseStatusValue);
@@ -441,11 +459,11 @@ public class TestCaseNoModelDataListener extends AnalysisEventListener<Map<Integ
 
         JSONArray customArr = new JSONArray();
         String caseStatusValue = "";
-        if (StringUtils.equalsAny(data.getStatus(), "Underway","underway" ,"进行中", "進行中")) {
+        if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Underway","进行中", "進行中")) {
             caseStatusValue = "Underway";
-        } else if (StringUtils.equalsAny(data.getStatus(), "Prepare","prepare" ,"未开始", "未開始")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Prepare","未开始", "未開始")) {
             caseStatusValue = "Prepare";
-        } else if (StringUtils.equalsAny(data.getStatus(), "Completed", "completed","已完成", "已完成")) {
+        } else if (StringUtils.equalsAnyIgnoreCase(data.getStatus(), "Completed", "已完成", "已完成")) {
             caseStatusValue = "Completed";
         }
         data.setStatus(caseStatusValue);

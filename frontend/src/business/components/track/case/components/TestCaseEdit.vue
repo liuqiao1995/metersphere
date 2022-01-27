@@ -23,6 +23,7 @@
                               ref="versionHistory"
                               :version-data="versionData"
                               :current-id="currentTestCaseInfo.id"
+                              :is-read="currentTestCaseInfo.trashEnable"
                               @confirmOtherInfo="confirmOtherInfo"
                               :current-project-id="currentProjectId"
                               @compare="compare" @checkout="checkout" @create="create" @del="del"/>
@@ -154,6 +155,14 @@
 
       </el-dialog>
 
+      <el-dialog
+        :visible.sync="isValidate"
+        :destroy-on-close="true"
+        :title="$t('commons.prompt')"
+      >
+        <span>{{currentValidateName+$t('commons.cannot_be_null')}}</span>
+      </el-dialog>
+
       <version-create-other-info-select @confirmOtherInfo="confirmOtherInfo" ref="selectPropDialog"></version-create-other-info-select>
     </div>
   </el-card>
@@ -236,6 +245,8 @@ export default {
       result: {},
       dialogFormVisible: false,
       showFollow: false,
+      isValidate:false,
+      currentValidateName:"",
       form: {
         name: '',
         module: 'default-module',
@@ -357,7 +368,7 @@ export default {
   watch: {
     form: {
       handler(val) {
-        if (val && this.$store.state.testCaseMap) {
+        if (val && this.$store.state.testCaseMap && this.form.id) {
           let change = this.$store.state.testCaseMap.get(this.form.id);
           change = change + 1;
           this.$store.state.testCaseMap.set(this.form.id, change);
@@ -367,7 +378,7 @@ export default {
     },
     'testCaseTemplate.customFields': {
       handler(val) {
-        if (val && this.$store.state.testCaseMap) {
+        if (val && this.$store.state.testCaseMap && this.form.id) {
           let change = this.$store.state.testCaseMap.get(this.form.id);
           change = change + 1;
           this.$store.state.testCaseMap.set(this.form.id, change);
@@ -403,7 +414,10 @@ export default {
     if (!(this.$store.state.testCaseMap instanceof Map)) {
       this.$store.state.testCaseMap = new Map();
     }
-    this.$store.state.testCaseMap.set(this.form.id, 0);
+    if (this.form.id) {
+      this.$store.state.testCaseMap.set(this.form.id, 0);
+    }
+
   },
   created() {
     if (!this.projectList || this.projectList.length === 0) {   //没有项目数据的话请求项目数据
@@ -512,7 +526,9 @@ export default {
       if (!this.form.remark) {
         this.form.remark = "";
       }
-      this.$store.state.testCaseMap.set(this.form.id, 0);
+      if (this.form.id) {
+        this.$store.state.testCaseMap.set(this.form.id, 0);
+      }
     },
     handleCommand(e) {
       if (e === "ADD_AND_CREATE") {
@@ -559,7 +575,9 @@ export default {
       this.isStepTableAlive = false;
       this.$nextTick(() => {
         this.isStepTableAlive = true;
-        this.$store.state.testCaseMap.set(this.form.id, 0);
+        if (this.form.id) {
+          this.$store.state.testCaseMap.set(this.form.id, 0);
+        }
       });
     },
     reloadForm() {
@@ -710,7 +728,7 @@ export default {
           this.$emit("refreshTestCase",);
           this.$store.state.testCaseMap.delete(this.form.id);
           //this.tableType = 'edit';
-          this.$emit("refresh", this.form);
+          this.$emit("refresh", response.data);
           if (this.form.id) {
             this.$emit("caseEdit", param);
           } else {
@@ -743,6 +761,9 @@ export default {
         if (this.projectId) {
           param.projectId = this.projectId;
         }
+      }
+      if (this.publicEnable) {
+        this.casePublic = true;
       }
       param.name = param.name.trim();
       if (this.form.tags instanceof Array) {
@@ -981,6 +1002,17 @@ export default {
       this.$refs['customFieldForm'].validate((valid) => {
         if (!valid) {
           isValidate = false;
+          for (let i = 0; i < this.$refs['customFieldForm'].fields.length; i++) {
+            let customField = this.$refs['customFieldForm'].fields[i];
+            if(customField.validateState==='error'){
+              if(this.currentValidateName){
+                this.currentValidateName = this.currentValidateName+","+customField.label
+              }else{
+                this.currentValidateName = customField.label
+              }
+            }
+          }
+          this.isValidate = true;
           return false;
         }
       });
@@ -1010,6 +1042,7 @@ export default {
             this.$get('/test/case/delete/' + row.id + '/' + this.form.refId, () => {
               this.$success(this.$t('commons.delete_success'));
               this.getVersionHistory();
+              this.$emit("refresh");
             });
           } else {
             that.$refs.versionHistory.loading = false;

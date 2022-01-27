@@ -1,5 +1,5 @@
 <template>
-  <el-dialog :close-on-click-modal="false" :title="$t('api_test.api_import.title')" width="90%"
+  <el-dialog :close-on-click-modal="false" :title="$t('api_test.api_import.title')" :width="dialogWidth"
              :visible.sync="visible" class="api-import" v-loading="result.loading" @close="close"
              :destroy-on-close="true">
 
@@ -23,9 +23,10 @@
 
     <el-form :model="formData" :rules="rules" label-width="100px" v-loading="result.loading" ref="form">
       <el-row>
-        <el-col :span="8">
+        <el-col :span="isSwagger2 && authEnable && swaggerUrlEnable ? 8: 11">
           <el-form-item :label="$t('commons.import_module')" prop="moduleId">
-            <ms-select-tree size="small" :data="moduleOptions" :defaultKey="formData.moduleId" @getValue="setModule" :obj="moduleObj" clearable checkStrictly/>
+            <ms-select-tree size="small" :data="moduleOptions" :defaultKey="formData.moduleId" @getValue="setModule"
+                            :obj="moduleObj" clearable checkStrictly/>
           </el-form-item>
           <el-form-item v-if="!isScenarioModel&&showImportModel" :label="$t('commons.import_mode')" prop="modeId">
             <el-select size="small" v-model="formData.modeId" clearable style="width: 100%">
@@ -68,11 +69,12 @@
           <el-divider direction="vertical"/>
         </el-col>
 
-        <el-col :span="14" v-show="isSwagger2 && swaggerUrlEnable" style="margin-top: 40px">
+        <el-col :span="12" v-show="isSwagger2 && swaggerUrlEnable" style="margin-top: 40px">
           <el-form-item :label="'Swagger URL'" prop="swaggerUrl" class="swagger-url">
             <el-input size="small" v-model="formData.swaggerUrl" clearable show-word-limit/>
           </el-form-item>
-          <el-switch v-model="authEnable" :active-text="$t('api_test.api_import.add_request_params')" @change="changeAuthEnable"></el-switch>
+          <el-switch v-model="authEnable" :active-text="$t('api_test.api_import.add_request_params')"
+                     @change="changeAuthEnable"></el-switch>
         </el-col>
 
         <el-col :span="14" v-show="isSwagger2 && authEnable && swaggerUrlEnable">
@@ -134,27 +136,28 @@
 </template>
 
 <script>
-  import MsDialogFooter from "../../../../common/components/MsDialogFooter";
-  import {listenGoBack, removeGoBackListener, hasLicense, getCurrentProjectID} from "@/common/js/utils";
-  import MsSelectTree from "../../../../common/select-tree/SelectTree";
-  import MsApiKeyValue from "../ApiKeyValue";
-  import MsApiVariable from "../ApiVariable";
-  import MsApiAuthConfig from "../auth/ApiAuthConfig";
-  import {REQUEST_HEADERS} from "@/common/js/constants";
-  import {ELEMENT_TYPE, TYPE_TO_C} from "@/business/components/api/automation/scenario/Setting";
-  import {KeyValue} from "../../model/ApiTestModel";
+import MsDialogFooter from "../../../../common/components/MsDialogFooter";
+import {getCurrentProjectID, hasLicense, listenGoBack, removeGoBackListener} from "@/common/js/utils";
+import MsSelectTree from "../../../../common/select-tree/SelectTree";
+import MsApiKeyValue from "../ApiKeyValue";
+import MsApiVariable from "../ApiVariable";
+import MsApiAuthConfig from "../auth/ApiAuthConfig";
+import {REQUEST_HEADERS} from "@/common/js/constants";
+import {TYPE_TO_C} from "@/business/components/api/automation/scenario/Setting";
+import {KeyValue} from "../../model/ApiTestModel";
 
-  export default {
-    name: "ApiImport",
-    components: {
-      MsDialogFooter,
-      MsSelectTree,
-      MsApiKeyValue,
-      MsApiVariable,
-      MsApiAuthConfig},
-    props: {
-      saved: {
-        type: Boolean,
+export default {
+  name: "ApiImport",
+  components: {
+    MsDialogFooter,
+    MsSelectTree,
+    MsApiKeyValue,
+    MsApiVariable,
+    MsApiAuthConfig
+  },
+  props: {
+    saved: {
+      type: Boolean,
         default: true,
       },
       moduleOptions: Array,
@@ -334,6 +337,12 @@
       projectId() {
         return getCurrentProjectID();
       },
+      dialogWidth() {
+        if (this.isSwagger2 && this.authEnable && this.swaggerUrlEnable) {
+          return '80%';
+        }
+        return '30%';
+      }
     },
     methods: {
       open(module) {
@@ -451,7 +460,7 @@
             this.versionOptions = response.data.filter(v => v.status === 'open');
             this.versionOptions.forEach(v => {
               if (v.latest) {
-                v.name = v.name + ' ' + this.$t('api_test.api_import.current_version');
+                v.name = v.name + ' ' + this.$t('api_test.api_import.latest_version');
               }
             });
           });

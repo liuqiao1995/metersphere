@@ -1456,6 +1456,7 @@ export default {
       parameters_advance_add_func: "Add Function",
       parameters_advance_add_func_limit: "Support up to 5 functions",
       parameters_advance_add_func_error: "Please select function first",
+      parameters_advance_add_mock_error: "Please select mock data first",
       parameters_advance_add_param_error: "Please enter function parameters",
       parameters_desc: "Parameters will be appended to the URL e.g. https://fit2cloud.com?Name=Value&Name2=Value2",
       headers: "Headers",
@@ -1684,7 +1685,7 @@ export default {
       import_version: 'Import version',
       data_update_version: 'Api update version',
       data_new_version: 'Api creation version',
-      current_version: 'Current version',
+      latest_version: 'Latest version',
     },
     home_page: {
       unit_of_measurement: "",
@@ -2039,6 +2040,7 @@ export default {
         import_update: "Import Update",
         import_tip1: "The ID is required when the \"Test Case Custom ID\" switch is turned on in the project settings",
         import_tip2: "ID is required when importing and updating",
+        import_file_tips: "Please upload the file first!",
       },
       export: {
         export: "Export cases",

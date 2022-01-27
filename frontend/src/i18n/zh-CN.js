@@ -1461,6 +1461,7 @@ export default {
       parameters_advance_add_func: "添加函数",
       parameters_advance_add_func_limit: "最多支持5个函数",
       parameters_advance_add_func_error: "请先选择函数",
+      parameters_advance_add_mock_error: "请先选择mock数据",
       parameters_advance_add_param_error: "请输入函数参数",
       parameters_desc: "参数追加到URL，例如https://fit2cloud.com/entries?key1=Value1&Key2=Value2",
       headers: "请求头",
@@ -1689,7 +1690,7 @@ export default {
       import_version: '导入版本',
       data_update_version: '数据更新版本',
       data_new_version: '数据创建版本',
-      current_version: '当前版本',
+      latest_version: '最新版本',
     },
     home_page: {
       unit_of_measurement: "个",
@@ -2037,6 +2038,7 @@ export default {
         import_update: "导入更新",
         import_tip1: "项目设置中“测试用例自定义ID” 开关开启时ID为必填项",
         import_tip2: "导入更新时ID为必填项",
+        import_file_tips: "请先上传文件！",
       },
       export: {
         export: "导出用例",

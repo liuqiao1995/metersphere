@@ -80,7 +80,11 @@ public class TestPlanApiCaseService {
         request.setProjectId(null);
         request.setOrders(ServiceUtils.getDefaultSortOrder(request.getOrders()));
         List<TestPlanApiCaseDTO> apiTestCases = extTestPlanApiCaseMapper.list(request);
-        ServiceUtils.buildVersionInfo(apiTestCases);
+        try{
+            ServiceUtils.buildVersionInfo(apiTestCases);
+        }catch (Exception e) {
+            LogUtil.error(e);
+        }
         if (CollectionUtils.isEmpty(apiTestCases)) {
             return apiTestCases;
         }

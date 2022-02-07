@@ -12,7 +12,7 @@
     <template v-slot:default="scope">
       <el-row :gutter="10">
         <div class="container">
-          <el-col :span="17">
+          <el-col :span="24">
             <el-card>
               <el-scrollbar>
 
@@ -123,18 +123,18 @@
               </el-scrollbar>
             </el-card>
           </el-col>
-          <el-col :span="7">
-            <el-card class="comment-card">
-              <template slot="header">
-                <span style="font-size: 15px; color: #1E90FF">{{ $t('test_track.review.comment') }}</span>
-                <i class="el-icon-refresh" @click="getComments(testCase)"
-                   style="margin-left:10px;font-size: 14px; cursor: pointer"/>
-              </template>
-              <review-comment :comments="comments" :case-id="testCase.caseId" :review-id="testCase.reviewId"
-                              @getComments="getComments"/>
-            </el-card>
-            <!--            <case-comment :case-id="testCase ? testCase.caseId : ''" class="comment-card"/>-->
-          </el-col>
+<!--          <el-col :span="7">-->
+<!--            <el-card class="comment-card">-->
+<!--              <template slot="header">-->
+<!--                <span style="font-size: 15px; color: #1E90FF">{{ $t('test_track.review.comment') }}</span>-->
+<!--                <i class="el-icon-refresh" @click="getComments(testCase)"-->
+<!--                   style="margin-left:10px;font-size: 14px; cursor: pointer"/>-->
+<!--              </template>-->
+<!--              <review-comment :comments="comments" :case-id="testCase.caseId" :review-id="testCase.reviewId"-->
+<!--                              @getComments="getComments"/>-->
+<!--            </el-card>-->
+<!--            &lt;!&ndash;            <case-comment :case-id="testCase ? testCase.caseId : ''" class="comment-card"/>&ndash;&gt;-->
+<!--          </el-col>-->
 
 
         </div>

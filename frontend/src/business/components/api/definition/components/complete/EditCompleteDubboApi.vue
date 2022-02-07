@@ -16,7 +16,7 @@
                style="color: #783987; font-size: 28px; margin-right: 5px; position: relative; top: 5px; cursor: pointer "
                @click="saveFollow"/>
           </el-tooltip>
-          <el-link type="primary" style="margin-right: 20px" @click="openHis" v-if="basisData.id">
+          <el-link type="primary" style="margin-right: 5px" @click="openHis" v-if="basisData.id">
             {{ $t('operating_log.change_history') }}
           </el-link>
           <!--  版本历史 -->
@@ -232,7 +232,7 @@ export default {
     getVersionHistory() {
       this.$get('/api/definition/versions/' + this.basisData.id, response => {
         if (this.basisData.isCopy) {
-          this.versionData = response.data.filter(v => v.versionId === this.httpForm.versionId);
+          this.versionData = response.data.filter(v => v.versionId === this.basisData.versionId);
         } else {
           this.versionData = response.data;
         }

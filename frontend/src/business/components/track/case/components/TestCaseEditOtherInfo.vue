@@ -5,33 +5,33 @@
         <form-rich-text-item class="remark-item" :disabled="readOnly" :data="form" prop="remark"/>
       </el-row>
     </el-tab-pane>
-    <el-tab-pane :label="$t('test_track.case.relate_test')" name="relateTest">
-      <test-case-test-relate :read-only="readOnly" :case-id="caseId" :version-enable="versionEnable" ref="relateTest"/>
-    </el-tab-pane>
+<!--    <el-tab-pane :label="$t('test_track.case.relate_test')" name="relateTest">-->
+<!--      <test-case-test-relate :read-only="readOnly" :case-id="caseId" :version-enable="versionEnable" ref="relateTest"/>-->
+<!--    </el-tab-pane>-->
 
-    <el-tab-pane :label="$t('test_track.related_requirements')" name="demand">
-      <el-col :span="7">
-        <el-form-item :label="$t('test_track.related_requirements')" :label-width="labelWidth"
-                      prop="demandId">
+<!--    <el-tab-pane :label="$t('test_track.related_requirements')" name="demand">-->
+<!--      <el-col :span="7">-->
+<!--        <el-form-item :label="$t('test_track.related_requirements')" :label-width="labelWidth"-->
+<!--                      prop="demandId">-->
 
-          <el-cascader v-model="demandValue" :show-all-levels="false" :options="demandOptions" clearable/>
-        </el-form-item>
-      </el-col>
-      <el-col :span="7">
-        <el-form-item :label="$t('test_track.case.demand_name_id')" :label-width="labelWidth" prop="demandName"
-                      v-if="form.demandId=='other'">
-          <el-input :disabled="readOnly" v-model="form.demandName"></el-input>
-        </el-form-item>
-      </el-col>
-    </el-tab-pane>
+<!--          <el-cascader v-model="demandValue" :show-all-levels="false" :options="demandOptions" clearable/>-->
+<!--        </el-form-item>-->
+<!--      </el-col>-->
+<!--      <el-col :span="7">-->
+<!--        <el-form-item :label="$t('test_track.case.demand_name_id')" :label-width="labelWidth" prop="demandName"-->
+<!--                      v-if="form.demandId=='other'">-->
+<!--          <el-input :disabled="readOnly" v-model="form.demandName"></el-input>-->
+<!--        </el-form-item>-->
+<!--      </el-col>-->
+<!--    </el-tab-pane>-->
 
-    <el-tab-pane :label="$t('test_track.case.relate_issue')" name="bug">
-      <test-case-issue-relate
-        v-if="tabActiveName === 'bug'"
-        :plan-id="planId"
-        :read-only="readOnly && !(isTestPlan)"
-        :case-id="caseId" ref="issue"/>
-    </el-tab-pane>
+<!--    <el-tab-pane :label="$t('test_track.case.relate_issue')" name="bug">-->
+<!--      <test-case-issue-relate-->
+<!--        v-if="tabActiveName === 'bug'"-->
+<!--        :plan-id="planId"-->
+<!--        :read-only="readOnly && !(isTestPlan)"-->
+<!--        :case-id="caseId" ref="issue"/>-->
+<!--    </el-tab-pane>-->
 
     <el-tab-pane :label="$t('commons.relationship.name')" name="relationship">
       <template v-slot:label>

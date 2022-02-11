@@ -6,6 +6,7 @@ import io.metersphere.performance.parse.xml.reader.JmeterDocumentParser;
 import org.apache.commons.lang3.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.dom4j.Node;
 import org.dom4j.io.OutputFormat;
 import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
@@ -15,9 +16,10 @@ import org.xml.sax.helpers.XMLFilterImpl;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 
 public class EngineSourceParserFactory {
-    public static final boolean IS_TRANS = true;
+    public static final boolean IS_TRANS = false;
 
 
     public static EngineSourceParser createEngineSourceParser(String type) {
@@ -38,11 +40,19 @@ public class EngineSourceParserFactory {
         return reader.read(source);
     }
 
-    public static byte[] formatXml(Document document) throws Exception {
-        OutputFormat format = OutputFormat.createPrettyPrint();
+    public static byte[] getBytes(Document document) throws Exception {
+        OutputFormat format = new OutputFormat();
+        format.setIndentSize(2);
+        format.setNewlines(true);
+        format.setPadText(true);
+        format.setTrimText(false);
         try (
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
         ) {
+            // 删除空白的行
+            List<Node> nodes = document.selectNodes("//text()[normalize-space(.)='']");
+            nodes.forEach(node -> node.setText(""));
+
             XMLWriter xw = new XMLWriter(out, format);
             xw.setEscapeText(IS_TRANS);
             xw.write(document);

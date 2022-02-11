@@ -18,6 +18,7 @@
       row-key="id"
       border
       default-expand-all
+      :height="400"
       v-loading="loading">
 
       <el-table-column prop="name" :label="$t('api_test.definition.request.esb_table.name')" width="230">
@@ -30,7 +31,7 @@
       <el-table-column prop="include" width="78" :label="$t('api_test.request.assertions.must_contain')"
                        :render-header="renderHeader">
         <template slot-scope="scope">
-          <el-checkbox v-model="scope.row.include" @change="handleCheckOneChange" :disabled="checked"/>
+          <el-checkbox v-model="scope.row.include" @change="handleCheckOneChange" :disabled="checked || scope.row.type==='array'"/>
         </template>
       </el-table-column>
 
@@ -130,7 +131,7 @@ export default {
         {value: 'object', label: 'object'},
         {value: 'array', label: 'array'},
         {value: 'string', label: 'string'},
-        {value: 'int', label: 'int'},
+        {value: 'integer', label: 'integer'},
         {value: 'number', label: 'number'},
         {value: 'boolean', label: 'boolean'},
       ],
@@ -307,6 +308,9 @@ export default {
         arr.forEach(item => {
           if (type === 1) {
             item.include = val
+            if (item.type === 'array') {
+              item.include = false;
+            }
           }
           if (type === 2) {
             item.typeVerification = val
@@ -326,6 +330,9 @@ export default {
       }
       this.tableData.forEach(item => {
         item.include = val;
+        if (item.type === 'array') {
+          item.include = false;
+        }
         this.childrenChecked(item.children, 1, val);
       })
     },

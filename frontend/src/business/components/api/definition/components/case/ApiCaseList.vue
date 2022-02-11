@@ -209,6 +209,9 @@ export default {
     apiCaseClose() {
       this.apiCaseList = [];
       this.visible = false;
+      if (this.$route.fullPath !== this.$route.path) {
+        this.$router.replace({path: '/api/definition'});
+      }
       this.$emit('refresh');
     },
     refreshModule() {

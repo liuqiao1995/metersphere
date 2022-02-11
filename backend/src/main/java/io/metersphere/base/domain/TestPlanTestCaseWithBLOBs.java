@@ -17,5 +17,7 @@ public class TestPlanTestCaseWithBLOBs extends TestPlanTestCase implements Seria
 
     private String executeRemark;
 
+    private String bugId;
+
     private static final long serialVersionUID = 1L;
 }

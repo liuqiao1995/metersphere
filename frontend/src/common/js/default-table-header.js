@@ -132,15 +132,17 @@ export let CUSTOM_TABLE_HEADER = {
   TEST_PLAN_FUNCTION_TEST_CASE: [
     {id: 'num', key: '1', label: 'commons.id'},
     {id: 'name', key: '2', label: 'commons.name'},
-    {id: 'versionId', key: 'b', label: 'project.version.name', xpack: true},
+    {id: 'versionId', key: 'd', label: 'project.version.name', xpack: true},
     {id: 'tags', key: '3', label: 'commons.tag'},
     {id: 'nodePath', key: '4', label: 'test_track.case.module'},
     {id: 'projectName', key: '5', label: 'test_track.review.review_project'},
-    {id: 'issuesContent', key: '6', label: 'test_track.issue.issue'},
-    {id: 'executor', key: '7', label: 'test_track.plan_view.executor'},
-    {id: 'status', key: '8', label: 'test_track.plan_view.execute_result'},
-    {id: 'updateTime', key: '9', label: 'commons.update_time'},
-    {id: 'createTime', key: 'a', label: 'commons.create_time'},
+    {id: 'bugId', key: '6', label: 'test_track.case.bug_id'},
+    {id: 'executeRemark', key: '7', label: 'test_track.case.execute_remark'},
+    {id: 'issuesContent', key: '8', label: 'test_track.issue.issue'},
+    {id: 'executor', key: '9', label: 'test_track.plan_view.executor'},
+    {id: 'status', key: 'a', label: 'test_track.plan_view.execute_result'},
+    {id: 'updateTime', key: 'b', label: 'commons.update_time'},
+    {id: 'createTime', key: 'c', label: 'commons.create_time'},
   ],
   //测试计划-api用例
   TEST_PLAN_API_CASE: [

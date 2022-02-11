@@ -112,6 +112,12 @@
                                                  :form="testCase" :case-id="testCase.caseId" ref="otherInfo"/>
                     </el-form-item >
 
+                    <ms-form-divider :title="$t('test_track.case.bug_id')"/>
+                    <el-col :span="4" >
+                      <input style="margin-left: 100px;" v-model="testCase.bug_id" class="el-input__inner">
+                    </el-col>
+                    <br>
+
                     <ms-form-divider :title="$t('test_track.case.execute_remark')"/>
                     <form-rich-text-item :label-width="formLabelWidth"
                                          :title="''"
@@ -333,6 +339,10 @@ export default {
       param.results = JSON.stringify(param.results);
       param.actualResult = this.testCase.actualResult;
       param.executeRemark = this.testCase.executeRemark;
+      param.bugId = this.testCase.bug_id;
+      if (!param.bugId){
+        param.bugId = "";
+      }
       this.$post('/test/plan/case/edit', param, () => {
         this.$request(option, (response) => {
 
@@ -431,6 +441,7 @@ export default {
           this.testCase.actualResult = this.testCaseTemplate.actualResult;
         }
         this.testCase.executeRemark = item.executeRemark;
+        this.testCase.bug_id = item.bugId;
         this.getComments(item);
       });
     },

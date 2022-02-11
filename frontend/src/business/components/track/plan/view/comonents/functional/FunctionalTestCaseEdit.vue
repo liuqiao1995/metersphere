@@ -36,7 +36,7 @@
                         @pre="handlePre"
                         @next="saveCase(true, true)"
                         :list="testCases"/>
-                      <el-button class="save-btn" type="primary" size="mini" :disabled="isReadOnly" @click="saveCase(true)">
+                      <el-button class="save-btn" type="primary" size="mini" :disabled="statusReadOnly" @click="saveCase(true)">
                         {{$t('test_track.save')}} & {{$t('test_track.next')}}
                       </el-button>
                     </el-col>
@@ -93,7 +93,7 @@
                                          :title="$t('test_track.case.prerequisite')" :data="testCase"
                                          prop="prerequisite"/>
                     <step-change-item :disable="true" :label-width="formLabelWidth" :form="testCase"/>
-                    <test-plan-case-step-results-item :label-width="formLabelWidth" :is-read-only="isReadOnly"
+                    <test-plan-case-step-results-item :label-width="formLabelWidth" :is-read-only="statusReadOnly"
                                                       v-if="testCase.stepModel === 'STEP'" :test-case="testCase"/>
                     <form-rich-text-item :label-width="formLabelWidth" v-if="testCase.stepModel === 'TEXT'"
                                          :disabled="true" :title="$t('test_track.case.step_desc')" :data="testCase"
@@ -111,6 +111,11 @@
                                                  :read-only="true" :is-test-plan="true" :project-id="testCase.projectId"
                                                  :form="testCase" :case-id="testCase.caseId" ref="otherInfo"/>
                     </el-form-item >
+
+                    <ms-form-divider :title="$t('test_track.case.execute_remark')"/>
+                    <form-rich-text-item :label-width="formLabelWidth"
+                                         :title="''"
+                                         :data="testCase" prop="executeRemark"/>
 
                   </el-form>
                 </div>
@@ -327,6 +332,7 @@ export default {
       }
       param.results = JSON.stringify(param.results);
       param.actualResult = this.testCase.actualResult;
+      param.executeRemark = this.testCase.executeRemark;
       this.$post('/test/plan/case/edit', param, () => {
         this.$request(option, (response) => {
 
@@ -424,6 +430,7 @@ export default {
           // 如果没值,使用模板的默认值
           this.testCase.actualResult = this.testCaseTemplate.actualResult;
         }
+        this.testCase.executeRemark = item.executeRemark;
         this.getComments(item);
       });
     },

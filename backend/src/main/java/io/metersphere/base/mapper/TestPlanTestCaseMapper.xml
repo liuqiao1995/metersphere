@@ -20,6 +20,7 @@
     <result column="issues" jdbcType="LONGVARCHAR" property="issues" />
     <result column="actual_result" jdbcType="LONGVARCHAR" property="actualResult" />
     <result column="execute_remark" jdbcType="LONGVARCHAR" property="executeRemark" />
+    <result column="bug_id" jdbcType="LONGVARCHAR" property="bugId" />
   </resultMap>
   <sql id="Example_Where_Clause">
     <where>
@@ -84,7 +85,7 @@
     create_user, issues_count, `order`
   </sql>
   <sql id="Blob_Column_List">
-    results, issues, actual_result, execute_remark
+    results, issues, actual_result, execute_remark, bug_id
   </sql>
   <select id="selectByExampleWithBLOBs" parameterType="io.metersphere.base.domain.TestPlanTestCaseExample" resultMap="ResultMapWithBLOBs">
     select
@@ -139,14 +140,14 @@
       report_id, executor, `status`,
       remark, create_time, update_time,
       create_user, issues_count, `order`,
-      results, issues, actual_result, execute_remark
+      results, issues, actual_result, execute_remark, bug_id
       )
     values (#{id,jdbcType=VARCHAR}, #{planId,jdbcType=VARCHAR}, #{caseId,jdbcType=VARCHAR},
       #{reportId,jdbcType=VARCHAR}, #{executor,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR},
       #{remark,jdbcType=VARCHAR}, #{createTime,jdbcType=BIGINT}, #{updateTime,jdbcType=BIGINT},
       #{createUser,jdbcType=VARCHAR}, #{issuesCount,jdbcType=INTEGER}, #{order,jdbcType=BIGINT},
       #{results,jdbcType=LONGVARCHAR}, #{issues,jdbcType=LONGVARCHAR}, #{actualResult,jdbcType=LONGVARCHAR},
-      #{executeRemark,jdbcType=LONGVARCHAR})
+      #{executeRemark,jdbcType=LONGVARCHAR},#{bugId,jdbcType=LONGVARCHAR})
   </insert>
   <insert id="insertSelective" parameterType="io.metersphere.base.domain.TestPlanTestCaseWithBLOBs">
     insert into test_plan_test_case
@@ -199,6 +200,9 @@
       <if test="executeRemark != null">
         execute_remark,
       </if>
+      <if test="bugId != null">
+        bug_id,
+      </if>
     </trim>
     <trim prefix="values (" suffix=")" suffixOverrides=",">
       <if test="id != null">
@@ -248,6 +252,9 @@
       </if>
       <if test="executeRemark != null">
         #{executeRemark,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="bugId != null">
+        #{bugId,jdbcType=LONGVARCHAR},
       </if>
     </trim>
   </insert>
@@ -308,6 +315,9 @@
       <if test="record.executeRemark != null">
         execute_remark = #{record.executeRemark,jdbcType=LONGVARCHAR},
       </if>
+      <if test="record.bugId != null">
+        bug_id = #{record.bugId,jdbcType=LONGVARCHAR},
+      </if>
     </set>
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
@@ -331,6 +341,7 @@
       issues = #{record.issues,jdbcType=LONGVARCHAR},
       actual_result = #{record.actualResult,jdbcType=LONGVARCHAR},
       execute_remark = #{record.executeRemark,jdbcType=LONGVARCHAR}
+      bug_id = #{record.bugId,jdbcType=LONGVARCHAR}
     <if test="_parameter != null">
       <include refid="Update_By_Example_Where_Clause" />
     </if>
@@ -401,6 +412,9 @@
       <if test="executeRemark != null">
         execute_remark = #{executeRemark,jdbcType=LONGVARCHAR},
       </if>
+      <if test="bugId != null">
+        bug_id = #{bugId,jdbcType=LONGVARCHAR},
+      </if>
     </set>
     where id = #{id,jdbcType=VARCHAR}
   </update>
@@ -421,6 +435,7 @@
       issues = #{issues,jdbcType=LONGVARCHAR},
       actual_result = #{actualResult,jdbcType=LONGVARCHAR},
       execute_remark = #{executeRemark,jdbcType=LONGVARCHAR}
+      bug_id = #{bugId,jdbcType=LONGVARCHAR}
     where id = #{id,jdbcType=VARCHAR}
   </update>
   <update id="updateByPrimaryKey" parameterType="io.metersphere.base.domain.TestPlanTestCase">

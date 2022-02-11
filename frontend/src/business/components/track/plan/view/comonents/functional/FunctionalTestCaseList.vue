@@ -1,7 +1,7 @@
 <template>
   <div class="card-container">
     <ms-table-header :condition.sync="condition" @search="initTableData"
-                     :show-create="false" :tip="$t('commons.search_by_id_name_tag')">
+                     :show-create="false" :tip="$t('commons.search_by_id_name_bugId_tag')">
 
       <!-- 不显示 “全部用例” 标题,使标题为空 -->
       <template v-slot:title>
@@ -207,6 +207,22 @@
               </el-dropdown>
             </span>
           </template>
+        </ms-table-column>
+
+        <ms-table-column
+          prop="bugId"
+          :field="item"
+          :fields-width="fieldsWidth"
+          :label="$t('test_track.case.bug_id')"
+          min-width="140px">
+        </ms-table-column>
+
+        <ms-table-column
+          prop="executeRemark"
+          :field="item"
+          :fields-width="fieldsWidth"
+          :label="$t('test_track.case.execute_remark')"
+          min-width="140px">
         </ms-table-column>
 
         <ms-table-column

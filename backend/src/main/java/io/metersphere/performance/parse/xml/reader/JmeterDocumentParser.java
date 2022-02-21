@@ -73,8 +73,7 @@ public class JmeterDocumentParser implements EngineSourceParser {
 
         if (hashTree.elements().size() > 0) {
             final List<Element> childNodes = hashTree.elements();
-            for (int i = 0; i < childNodes.size(); i++) {
-                Element ele = childNodes.get(i);
+            for (Element ele : childNodes) {
                 if (nodeNameEquals(ele, HASH_TREE_ELEMENT)) {
                     parseHashTree(ele);
                 } else if (nodeNameEquals(ele, TEST_PLAN)) {
@@ -393,7 +392,7 @@ public class JmeterDocumentParser implements EngineSourceParser {
       </Arguments>
          */
 
-        Element element = ele.addElement(ARGUMENTS);
+        Element element = hashTree.addElement(ARGUMENTS);
         element.addAttribute("guiclass", "ArgumentsPanel");
         element.addAttribute("testclass", "Arguments");
         element.addAttribute("testname", "User Defined Variables");
@@ -610,6 +609,15 @@ public class JmeterDocumentParser implements EngineSourceParser {
         }
 
         Element listenerParent = getNextSibling(element);
+
+        List<Element> childNodes = listenerParent.elements();
+        for (Element item : childNodes) {
+            if (nodeNameEquals(item, BACKEND_LISTENER)) {
+                // 如果已经存在，不再添加
+                removeChildren(item);
+                return;
+            }
+        }
 
         // add class name
         Element backendListener = listenerParent.addElement(BACKEND_LISTENER);

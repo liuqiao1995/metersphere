@@ -426,6 +426,7 @@ export default {
     sync_other_info: "Copy other config",
     delete_current_version: 'Current version',
     delete_all_version: 'All versions',
+    change_password_tips: 'Your password is the initial system password, please change it as soon as possible'
   },
   login: {
     normal_Login: "Normal Login",
@@ -992,6 +993,7 @@ export default {
     ramp_up_time_within: 'In',
     ramp_up_time_minutes: 'seconds, separate',
     ramp_up_time_seconds: 'seconds add VUs',
+    ramp_up_tips: 'The RampUp is too large, the chart rendering will not be displayed, this does not affect the test execution, please refer to the actual results',
     iterate_num: 'Iterations',
     by_iteration: 'By iterations',
     by_duration: 'By duration',
@@ -1389,7 +1391,9 @@ export default {
       request_timeout: "Request Timeout",
       response_timeout: "Response Timeout",
       repeat_warning: "The domain name whose activation condition is'None' already exists!",
-      copy_warning: "Domain names whose enabling conditions are'none' do not support copying!"
+      copy_warning: "Domain names whose enabling conditions are'none' do not support copying!",
+      path_warning: "The path cannot be empty",
+      module_warning: "The path cannot be empty"
     },
     scenario: {
       id: "Scenario ID",

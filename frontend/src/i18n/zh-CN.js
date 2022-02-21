@@ -428,6 +428,7 @@ export default {
     sync_other_info: "复制以下信息到新版本",
     delete_current_version: '列表版本',
     delete_all_version: '全部版本',
+    change_password_tips: '您的密码是系统初始密码，请尽快修改密码',
   },
   login: {
     normal_Login: "普通登录",
@@ -996,6 +997,7 @@ export default {
     ramp_up_time_within: '在',
     ramp_up_time_minutes: '秒内，分',
     ramp_up_time_seconds: '秒内增加并发用户',
+    ramp_up_tips: 'RampUp 过大，图表渲染卡顿不予展示，这并不影响测试执行，请以实际结果为准',
     iterate_num: '迭代次数',
     by_iteration: '按迭代次数',
     by_duration: '按持续时间',
@@ -1394,7 +1396,9 @@ export default {
       request_timeout: "链接超时",
       response_timeout: "响应超时",
       repeat_warning: "启用条件为 '无' 的域名已经存在！",
-      copy_warning: "启用条件为 '无' 的域名不支持复制！"
+      copy_warning: "启用条件为 '无' 的域名不支持复制！",
+      path_warning: "路径不能为空",
+      module_warning: "模块不能为空"
     },
     scenario: {
       id: "场景ID",

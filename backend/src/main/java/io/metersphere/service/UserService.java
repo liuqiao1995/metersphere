@@ -94,6 +94,8 @@ public class UserService {
     private ExtProjectMapper extProjectMapper;
     @Resource
     private ExtWorkspaceMapper extWorkspaceMapper;
+    @Resource
+    private OperatingLogMapper operatingLogMapper;
 
     public List<UserDetail> queryTypeByIds(List<String> userIds) {
         return extUserMapper.queryTypeByIds(userIds);
@@ -525,7 +527,7 @@ public class UserService {
         String oldPassword = CodingUtil.md5(request.getPassword(), "utf-8");
         String newPassword = request.getNewpassword();
         String newPasswordMd5 = CodingUtil.md5(newPassword);
-        if(StringUtils.equals(oldPassword,newPasswordMd5)){
+        if (StringUtils.equals(oldPassword, newPasswordMd5)) {
             return null;
         }
         UserExample userExample = new UserExample();
@@ -1285,14 +1287,32 @@ public class UserService {
 
     /**
      * 根据userId 获取 user 所属工作空间和所属工作项目
+     *
      * @param userId
      */
-    public Map<Object,Object> getWSAndProjectByUserId(String userId){
-        Map<Object,Object>map = new HashMap<>(2);
+    public Map<Object, Object> getWSAndProjectByUserId(String userId) {
+        Map<Object, Object> map = new HashMap<>(2);
         List<Project> projects = extProjectMapper.getProjectByUserId(userId);
         List<Workspace> workspaces = extWorkspaceMapper.getWorkspaceByUserId(userId);
-        map.put("project",projects);
-        map.put("workspace",workspaces);
+        map.put("project", projects);
+        map.put("workspace", workspaces);
         return map;
+    }
+
+    public boolean checkWhetherChangePasswordOrNot(LoginRequest request) {
+        // 首次登录需要提示
+        if (operatingLogMapper.countByExample(new OperatingLogExample()) == 0) {
+            return true;
+        }
+
+        // 升级之后 admin 还使用弱密码也提示修改
+        if (StringUtils.equals("admin", request.getUsername())) {
+            UserExample example = new UserExample();
+            example.createCriteria().andIdEqualTo("admin")
+                    .andPasswordEqualTo(CodingUtil.md5("metersphere"));
+            return userMapper.countByExample(example) > 0;
+        }
+
+        return false;
     }
 }

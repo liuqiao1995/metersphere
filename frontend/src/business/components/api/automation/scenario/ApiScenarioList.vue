@@ -134,12 +134,12 @@
 
           <ms-table-column prop="principalName"
                            min-width="120px"
-                           :label="$t('api_test.definition.api_principal')"
+                           :label="$t('api_test.definition.request.responsible')"
                            :filters="userFilters"
                            :field="item"
                            :fields-width="fieldsWidth"
                            sortable/>
-          <ms-table-column prop="creator" min-width="120px"
+          <ms-table-column prop="creatorName" min-width="120px"
                            :label="$t('api_test.automation.creator')"
                            :filters="userFilters"
                            :field="item"

@@ -381,19 +381,23 @@ public class MockConfigService {
             JSONObject expectBodyObject = expectParamsObj.getJSONObject("body");
             JSONArray jsonArray = requestMockParams.getBodyParams();
             String type = expectBodyObject.getString("type");
+            String paramsFilterType = "And";
+            if (expectBodyObject.containsKey("paramsFilterType")) {
+                paramsFilterType = expectBodyObject.getString("paramsFilterType");
+            }
             if (StringUtils.equalsAnyIgnoreCase(type, "Form Data", "WWW_FORM") && expectBodyObject.containsKey("kvs")) {
                 JSONArray kvsArr = expectBodyObject.getJSONArray("kvs");
                 List<MockConfigRequestParams> mockConfigRequestParams = MockApiUtils.getParamsByJSONArray(kvsArr);
-                if (!MockApiUtils.checkParamsCompliance(jsonArray, mockConfigRequestParams)) {
+                if (!MockApiUtils.checkParamsCompliance(jsonArray, mockConfigRequestParams, StringUtils.equals(paramsFilterType, "And"))) {
                     return false;
                 }
-            }else {
+            } else {
                 JSON mockExpectJsonArray = MockApiUtils.getExpectBodyParams(expectBodyObject);
                 if (mockExpectJsonArray instanceof JSONObject) {
                     if (!JsonStructUtils.checkJsonArrayCompliance(jsonArray, (JSONObject) mockExpectJsonArray)) {
                         return false;
                     }
-                } else if (mockExpectJsonArray instanceof JSONArray) {
+                } else if (mockExpectJsonArray instanceof JSONArray && ((JSONArray) mockExpectJsonArray).size() > 0) {
                     if (!JsonStructUtils.checkJsonArrayCompliance(jsonArray, (JSONArray) mockExpectJsonArray)) {
                         return false;
                     }
@@ -401,10 +405,15 @@ public class MockConfigService {
             }
         }
 
+        String paramsFilterType = "And";
+        if (expectParamsObj.containsKey("paramsFilterType")) {
+            paramsFilterType = expectParamsObj.getString("paramsFilterType");
+        }
+
         if (expectParamsObj.containsKey("arguments")) {
             JSONArray argumentsArray = expectParamsObj.getJSONArray("arguments");
             List<MockConfigRequestParams> mockConfigRequestParams = MockApiUtils.getParamsByJSONArray(argumentsArray);
-            if (!MockApiUtils.checkParamsCompliance(requestMockParams.getQueryParamsObj(), mockConfigRequestParams)) {
+            if (!MockApiUtils.checkParamsCompliance(requestMockParams.getQueryParamsObj(), mockConfigRequestParams, StringUtils.equals(paramsFilterType, "And"))) {
                 return false;
             }
         }
@@ -412,7 +421,7 @@ public class MockConfigService {
         if (expectParamsObj.containsKey("rest")) {
             JSONArray restArray = expectParamsObj.getJSONArray("rest");
             List<MockConfigRequestParams> mockConfigRequestParams = MockApiUtils.getParamsByJSONArray(restArray);
-            if (!MockApiUtils.checkParamsCompliance(requestMockParams.getRestParamsObj(), mockConfigRequestParams)) {
+            if (!MockApiUtils.checkParamsCompliance(requestMockParams.getRestParamsObj(), mockConfigRequestParams, StringUtils.equals(paramsFilterType, "And"))) {
                 return false;
             }
         }
@@ -715,7 +724,12 @@ public class MockConfigService {
                     }
                 }
                 if (responseJsonObj.containsKey("body")) {
-                    returnStr = MockApiUtils.getResultByResponseResult(responseJsonObj.getJSONObject("body"), url, headerMap, requestMockParams);
+                    MockApiUtils mockApiUtils = new MockApiUtils();
+                    boolean useScript = false;
+                    if(responseJsonObj.containsKey("usePostScript")){
+                        useScript = responseJsonObj.getBoolean("usePostScript");
+                    }
+                    returnStr = mockApiUtils.getResultByResponseResult(responseJsonObj.getJSONObject("body"), url, headerMap, requestMockParams,useScript);
                 }
                 if (responseJsonObj.containsKey("httpCode")) {
                     int httpCodeNum = 500;
@@ -1117,6 +1131,21 @@ public class MockConfigService {
                     returnStr = this.updateHttpServletResponse(finalExpectConfig, url, requestHeaderMap, mockParams, response);
                     break;
                 }
+                if(!isMatch){
+                    Map<String,String> apiResponseMap = MockApiUtils.getApiResponse(api.getResponse());
+                    if(MapUtils.isNotEmpty(apiResponseMap)){
+                        returnStr = apiResponseMap.get("returnMsg");
+                        if(StringUtils.isNotEmpty(returnStr)){
+                            isMatch = true;
+                            int code = 200;
+                            if(apiResponseMap.containsKey("code")){
+                                code = Integer.parseInt(apiResponseMap.get("code"));
+                            }
+                            response.setStatus(code);
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -1157,6 +1186,21 @@ public class MockConfigService {
                         returnStr = this.updateHttpServletResponse(finalExpectConfig, url, requestHeaderMap, paramMap, response);
                         isMatch = true;
                         break;
+                    }
+                }
+                if(!isMatch){
+                    Map<String,String> apiResponseMap = MockApiUtils.getApiResponse(api.getResponse());
+                    if(MapUtils.isNotEmpty(apiResponseMap)){
+                        returnStr = apiResponseMap.get("returnMsg");
+                        if(StringUtils.isNotEmpty(returnStr)){
+                            isMatch = true;
+                            int code = 200;
+                            if(apiResponseMap.containsKey("code")){
+                                code = Integer.parseInt(apiResponseMap.get("code"));
+                            }
+                            response.setStatus(code);
+                            break;
+                        }
                     }
                 }
             }
@@ -1248,15 +1292,12 @@ public class MockConfigService {
                         } else if (isXMLMessage && StringUtils.equalsIgnoreCase(reportType, "xml")) {
                             if (requestJson.containsKey("xmlDataStruct")) {
                                 JSONObject sourceObj = XMLUtils.XmlToJson(message);
-                                String xmlStr = "";
                                 try {
                                     List<TcpTreeTableDataStruct> tcpDataList = JSONArray.parseArray(requestJson.getString("xmlDataStruct"), TcpTreeTableDataStruct.class);
-                                    xmlStr = TcpTreeTableDataParser.treeTableData2Xml(tcpDataList);
+                                    isMatch = TcpTreeTableDataParser.isMatchTreeTableData(sourceObj,tcpDataList);
                                 } catch (Exception e) {
-
+                                    LogUtil.error(e);
                                 }
-                                JSONObject matchObj = XMLUtils.XmlToJson(xmlStr);
-                                isMatch = JsonStructUtils.checkJsonObjCompliance(sourceObj, matchObj);
                             }
                         } else if (StringUtils.equalsIgnoreCase(reportType, "raw")) {
                             if (requestJson.containsKey("rawDataStruct")) {
@@ -1350,7 +1391,7 @@ public class MockConfigService {
                 if (mockConfig == null) {
                     this.insertMockExpectConfigs(apiId, request.getProjectId(), list, sqlSession);
                 } else {
-                    this.updateMockExpectConfigs(mockConfig, list ,sqlSession);
+                    this.updateMockExpectConfigs(mockConfig, list, sqlSession);
                 }
             }
 
@@ -1360,15 +1401,15 @@ public class MockConfigService {
     private void updateMockExpectConfigs(MockConfig mockConfig, List<MockExpectConfigWithBLOBs> list, SqlSession sqlSession) {
         int batchCount = 0;
         for (MockExpectConfigWithBLOBs mockExpect : list) {
-            MockExpectConfig expectInDb = this.findMockExpectConfigByMockConfigIdAndExpectNum(mockConfig.getId(),mockExpect.getExpectNum());
-            if(expectInDb == null){
+            MockExpectConfig expectInDb = this.findMockExpectConfigByMockConfigIdAndExpectNum(mockConfig.getId(), mockExpect.getExpectNum());
+            if (expectInDb == null) {
                 mockExpect.setId(UUID.randomUUID().toString());
                 mockExpect.setMockConfigId(mockConfig.getId());
                 mockExpect.setCreateTime(System.currentTimeMillis());
                 mockExpect.setUpdateTime(System.currentTimeMillis());
                 mockExpect.setCreateUserId(SessionUtils.getUserId());
                 mockExpectConfigMapper.insert(mockExpect);
-            }else {
+            } else {
                 mockExpect.setMockConfigId(mockConfig.getId());
                 mockExpect.setId(expectInDb.getId());
                 mockExpect.setUpdateTime(System.currentTimeMillis());
@@ -1385,9 +1426,9 @@ public class MockConfigService {
         MockExpectConfigExample example = new MockExpectConfigExample();
         example.createCriteria().andMockConfigIdEqualTo(mockConfigId).andExpectNumEqualTo(expectNum);
         List<MockExpectConfig> bloBs = this.mockExpectConfigMapper.selectByExample(example);
-        if(CollectionUtils.isNotEmpty(bloBs)){
+        if (CollectionUtils.isNotEmpty(bloBs)) {
             return bloBs.get(0);
-        }else {
+        } else {
             return null;
         }
     }

@@ -199,7 +199,7 @@ export default {
       });
     },
     openHis() {
-      this.$refs.changeHistory.open(this.test.id, ["性能测试", "性能測試", "Performance test"]);
+      this.$refs.changeHistory.open(this.test.id, ["性能测试", "性能測試", "Performance test", "PERFORMANCE_TEST"]);
     },
     importAPITest() {
       let apiTest = this.$store.state.test;
@@ -312,7 +312,7 @@ export default {
         return;
       }
       if (!this.test.versionId) {
-        if (this.$refs.versionHistory) {
+        if (this.$refs.versionHistory && this.$refs.versionHistory.currentVersion) {
           this.test.versionId = this.$refs.versionHistory.currentVersion.id;
         }
       }

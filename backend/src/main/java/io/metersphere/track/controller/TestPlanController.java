@@ -277,4 +277,19 @@ public class TestPlanController {
     public List<User> getPlanFollow(@PathVariable String planId) {
         return testPlanService.getPlanFollow(planId);
     }
+
+    @PostMapping(value = "/schedule/Batch/updateEnable")
+    public void updateBatchScheduleEnable(@RequestBody ScheduleInfoRequest request) {
+        testPlanService.batchUpdateScheduleEnable(request);
+    }
+
+    @PostMapping(value = "/schedule/enable/total")
+    public long countByScheduleEnableTotal(@RequestBody QueryTestPlanRequest request) {
+        return testPlanService.countScheduleEnableTotal(request);
+    }
+
+    @PostMapping(value = "/update/scheduleByEnable")
+    public ScheduleDTO updateTestPlanBySchedule(@RequestBody ScheduleInfoRequest request) {
+        return testPlanService.updateTestPlanBySchedule(request);
+    }
 }

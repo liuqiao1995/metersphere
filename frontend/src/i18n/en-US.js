@@ -1,6 +1,7 @@
 export default {
   commons: {
     project_permission: 'Please add the project permission first',
+    no_permission:'No permission yet',
     failure_continues: "Failure continues",
     full_screen_editing: "Full screen editing",
     trash: "Trash",
@@ -25,6 +26,7 @@ export default {
     import_mode: 'Import mode',
     import_module: 'Import module',
     import_user: 'Import user',
+    module_deep_limit: 'The node depth does not exceed 8 layers!',
     export: 'Export',
     please_fill_content: 'Please fill content',
     please_fill_in_the_template: 'Please fill in the template',
@@ -32,6 +34,9 @@ export default {
     cut_back_new_version: 'Switch back to new version',
     comment: 'Comment',
     close_schedule: 'Close Schedule',
+    open_schedule: 'Start Schedule',
+    schedule_switch: 'Schedule Switch',
+    schedule_cron_title: 'Schedule Time Expression',
     review_complete: 'Review Completed',
     examples: 'examples',
     help_documentation: 'Help',
@@ -163,6 +168,7 @@ export default {
     weeks_5: 'Fri',
     weeks_6: 'Sat',
     date_unit: {
+      hour: "HOUR",
       day: "Day",
       month: "Month",
       year: "Year"
@@ -220,7 +226,9 @@ export default {
     execute_history: "Execute history",
     debug_history: "Debug history",
     testing: "Testing",
-    enable_scene: "Enable scene environment",
+    enable_scene: "Original scene environment",
+    variable_scene: "Original scene variable",
+    reference_settings: "Reference settings",
     enable_scene_info: "Enable scene environment: the current step uses the original environment configuration of the scene to run",
     edit_info: "Edit details",
     environment: "Environment",
@@ -234,6 +242,8 @@ export default {
     cancel_follow_success: "Cancel Follow Success",
     generate_test_data: "Generate test data",
     type: "Type",
+    type_of_num:"Only Number",
+    validity_period:'Validity Period',
     please_select_a_deadline: "Please select a deadline",
     relationship: {
       name: 'Dependencies',
@@ -426,6 +436,7 @@ export default {
     sync_other_info: "Copy other config",
     delete_current_version: 'Current version',
     delete_all_version: 'All versions',
+    change_password_tips: 'Your password is the initial system password, please change it as soon as possible'
   },
   login: {
     normal_Login: "Normal Login",
@@ -862,6 +873,7 @@ export default {
     select_type: 'please select type',
     view_permission: 'view permission',
     system: 'System',
+    personal: 'Personal Information',
     organization: 'Organization',
     workspace: 'Workspace',
     project: 'Project',
@@ -894,6 +906,7 @@ export default {
     api_test_report: 'Api Test Report',
     load_test_report: 'Load Test Report',
     test_plan_report: 'Test Plan Report',
+    report_sharing_link: 'Report Sharing Link',
     recent: 'My recent Report',
     search_by_name: 'Search by Name',
     batch_add_monitor_tips: 'Format: name, IP, Port, description<br/>such as: item 1, 192.168.1.52, 9100, test',
@@ -993,6 +1006,7 @@ export default {
     ramp_up_time_within: 'In',
     ramp_up_time_minutes: 'seconds, separate',
     ramp_up_time_seconds: 'seconds add VUs',
+    ramp_up_tips: 'The RampUp is too large, the chart rendering will not be displayed, this does not affect the test execution, please refer to the actual results',
     iterate_num: 'Iterations',
     by_iteration: 'By iterations',
     by_duration: 'By duration',
@@ -1034,6 +1048,7 @@ export default {
     delete_threadgroup_confirm: 'Confirm delete scenario',
     scenario_list: 'Scenario List',
     scenario_name: 'Scenario Name',
+    report_type: 'Report type',
     upload_jmx: 'Upload JMX',
     exist_jmx: 'Existed Files',
     other_resource: 'Resource Files',
@@ -1368,6 +1383,7 @@ export default {
       loop_input_val: "Variable prefix",
       loop_message: "There is more than one request in the current cycle and cannot be closed",
       env_message: "Please select the operating environment for the project to which this step belongs in the environment configuration",
+      debug_message: "The current step is disabled and cannot be debugged",
       request_total: "request",
       request_success: "success",
       request_error: "error",
@@ -1400,7 +1416,9 @@ export default {
       request_timeout: "Request Timeout",
       response_timeout: "Response Timeout",
       repeat_warning: "The domain name whose activation condition is'None' already exists!",
-      copy_warning: "Domain names whose enabling conditions are'none' do not support copying!"
+      copy_warning: "Domain names whose enabling conditions are'none' do not support copying!",
+      path_warning: "The path cannot be empty",
+      module_warning: "The path cannot be empty"
     },
     scenario: {
       id: "Scenario ID",
@@ -1437,6 +1455,8 @@ export default {
       scenario_warning: "No other steps can be added to the referenced scenario steps and sub-steps",
       scenario_step_warning: "No other steps can be added under the current step",
       scenario_error: "Cannot reference or copy itself！",
+      integrated: "Integrated",
+      independent: "Independent",
     },
     request: {
       debug: "Debug",
@@ -1824,6 +1844,7 @@ export default {
         swagger_schedule: "swagger",
         confirm: {
           close_title: "Do you want to close this scheduled task？",
+          open_title: "Do you want to start this scheduled task?？",
         }
       }
     },
@@ -1844,6 +1865,14 @@ export default {
       before_the_pre_script_step: "Before pre-script in step",
       after_the_post_script_step: "After the script is placed in the step",
       before_the_post_script_step: "Post-in-step before script",
+      global_script_config: "Global script config",
+
+      pre_script_filter_request_type: "Pre script filter request type",
+      post_script_filter_request_type: "Post script filter request type",
+      pre_script_exec_order: "Pre script exec order",
+      post_script_exec_order: "Post script exec order",
+      pre_link_scenario_result: "Pre link scenario result",
+      post_link_scenario_result: "Post link scenario result",
     }
   },
   api_report: {
@@ -2112,6 +2141,13 @@ export default {
       test_plan_load_case_count: "Load case count",
       test_plan_component_case_count: "Component Case Count",
       data_name: "Data Name",
+      test_plan_batch_switch: "batch on/off scheduled tasks",
+      batch_update_schedule_enable: 'update the scheduled task status of {0} test plans',
+      batch_update_schedule_enable_alert: 'note: only test plans with scheduled tasks can be updated',
+      next_run_time: 'next running time',
+      schedule_enabled: 'enabled',
+      check_schedule_enabled: 'the data you checked has detected {0} scheduled tasks that can be modified',
+      no_check_schedule_enabled: 'the data you checked does not detect a scheduled task',
       load_case: {
         case: "Load Case",
         execution_status: "Execution status",
@@ -2998,6 +3034,13 @@ export default {
       upload: "UPLOAD",
       delete: "DELETE",
       read: "READ",
+    },
+    personal_information:{
+      name:'Setting',
+      personal_setting: 'Personal Setting',
+      api_keys: 'API Keys',
+      edit_password: "EDIT PASSWORD",
+      third_account: 'Third Account',
     },
     other: {
       track: "Track",

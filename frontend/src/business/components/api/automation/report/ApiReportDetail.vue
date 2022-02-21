@@ -19,7 +19,8 @@
                     <span class="fail">{{ $t('api_report.fail') }}</span>
                   </template>
                   <ms-scenario-results v-on:requestResult="requestResult" :console="content.console"
-                                       :treeData="fullTreeNodes" ref="failsTree"/>
+                                       :treeData="fullTreeNodes" ref="failsTree"
+                                       :errorReport="content.error"/>
                 </el-tab-pane>
                 <el-tab-pane name="errorReport" v-if="content.errorCode > 0">
                   <template slot="label">
@@ -38,7 +39,7 @@
 
               </el-tabs>
             </div>
-            <ms-api-report-export v-if="reportExportVisible" id="apiTestReport" :title="report.testName"
+            <ms-api-report-export v-if="reportExportVisible" id="apiTestReport" :title="report.name"
                                   :content="content" :total-time="totalTime"/>
           </main>
         </section>
@@ -461,17 +462,23 @@ export default {
     },
     handleExport() {
       if (this.report.reportVersion && this.report.reportVersion > 1) {
-        this.fullTreeNodes.forEach(item => {
-          if (item.type === "scenario") {
-            let scenario = {name: item.label, requestResults: []};
-            if (this.content.scenarios && this.content.scenarios.length > 0) {
-              this.content.scenarios.push(scenario);
-            } else {
-              this.content.scenarios = [scenario];
+        if(this.report.reportType === 'API_INTEGRATED'){
+          let scenario = {name: "", requestResults: []};
+          this.content.scenarios = [scenario];
+          this.formatExportApi(this.fullTreeNodes, scenario);
+        }else {
+          this.fullTreeNodes.forEach(item => {
+            if (item.type === "scenario") {
+              let scenario = {name: item.label, requestResults: []};
+              if (this.content.scenarios && this.content.scenarios.length > 0) {
+                this.content.scenarios.push(scenario);
+              } else {
+                this.content.scenarios = [scenario];
+              }
+              this.formatExportApi(item.children, scenario);
             }
-            this.formatExportApi(item.children, scenario);
-          }
-        })
+          })
+        }
       }
       this.reportExportVisible = true;
       let reset = this.exportReportReset;

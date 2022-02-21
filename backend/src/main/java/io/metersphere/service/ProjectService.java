@@ -14,10 +14,7 @@ import io.metersphere.base.mapper.ext.ExtProjectMapper;
 import io.metersphere.base.mapper.ext.ExtProjectVersionMapper;
 import io.metersphere.base.mapper.ext.ExtUserGroupMapper;
 import io.metersphere.base.mapper.ext.ExtUserMapper;
-import io.metersphere.commons.constants.IssuesManagePlatform;
-import io.metersphere.commons.constants.ScheduleGroup;
-import io.metersphere.commons.constants.ScheduleType;
-import io.metersphere.commons.constants.UserGroupConstants;
+import io.metersphere.commons.constants.*;
 import io.metersphere.commons.exception.MSException;
 import io.metersphere.commons.utils.CommonBeanFactory;
 import io.metersphere.commons.utils.LogUtil;
@@ -108,6 +105,9 @@ public class ProjectService {
     private TestPlanReportService testPlanReportService;
     @Resource
     private ApiScenarioReportService apiScenarioReportService;
+    @Resource
+    private ProjectApplicationMapper projectApplicationMapper;
+
 
     public Project addProject(Project project) {
         if (StringUtils.isBlank(project.getName())) {
@@ -120,6 +120,11 @@ public class ProjectService {
         if (projectMapper.countByExample(example) > 0) {
             MSException.throwException(Translator.get("project_name_already_exists"));
         }
+
+        if (project.getMockTcpPort() != null && project.getMockTcpPort().intValue() > 0) {
+            this.checkMockTcpPort(project.getMockTcpPort().intValue());
+        }
+
         if (StringUtils.isBlank(project.getPlatform())) {
             project.setPlatform(IssuesManagePlatform.Local.name());
         }
@@ -159,6 +164,16 @@ public class ProjectService {
             projectVersion.setStatus("open");
             projectVersionService.addProjectVersion(projectVersion);
         }
+
+        //创建新项目也创建相关新项目的应用（分测试跟踪，接口，性能）
+        ProjectApplication projectApplication = new ProjectApplication();
+        projectApplication.setProjectId(project.getId());
+        //每个新项目都会有测试跟踪/性能报告分享链接的有效时间,默认时间24H
+        projectApplication.setType(ProjectApplicationType.TRACK_SHARE_REPORT_TIME.toString());
+        projectApplication.setTypeValue("24H");
+        projectApplicationMapper.insert(projectApplication);
+        projectApplication.setType(ProjectApplicationType.PERFORMANCE_SHARE_REPORT_TIME.toString());
+        projectApplicationMapper.insert(projectApplication);
         return project;
     }
 
@@ -296,6 +311,14 @@ public class ProjectService {
                 reportIdList.forEach(reportId -> performanceReportService.deleteReport(reportId));
             }
         });
+        //删除分享报告时间
+        delReportTime(projectId,"PERFORMANCE");
+    }
+
+    private void delReportTime(String projectId,String type) {
+        ProjectApplicationExample projectApplicationExample = new ProjectApplicationExample();
+        projectApplicationExample.createCriteria().andProjectIdEqualTo(projectId).andTypeEqualTo(type);
+        projectApplicationMapper.deleteByExample(projectApplicationExample);
     }
 
     private void deleteTrackResourceByProjectId(String projectId) {
@@ -306,6 +329,8 @@ public class ProjectService {
             });
         }
         testCaseService.deleteTestCaseByProjectId(projectId);
+        //删除分享报告时间
+        delReportTime(projectId,"TRACK");
     }
 
     private void deleteAPIResourceByProjectId(String projectId) {
@@ -318,6 +343,9 @@ public class ProjectService {
             apiTestService.delete(deleteAPITestRequest);
         });
     }
+
+
+
 
     public void updateProject(Project project) {
         //查询之前的TCP端口，用于检查是否需要开启/关闭 TCP接口

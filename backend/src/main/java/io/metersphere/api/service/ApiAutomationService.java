@@ -701,13 +701,15 @@ public class ApiAutomationService {
         } else {
             String scenarioId = request.getId();
             ApiScenarioWithBLOBs apiScenarioWithBLOBs = apiScenarioMapper.selectByPrimaryKey(scenarioId);
-            String environmentType = apiScenarioWithBLOBs.getEnvironmentType();
-            String environmentGroupId = apiScenarioWithBLOBs.getEnvironmentGroupId();
-            String environmentJson = apiScenarioWithBLOBs.getEnvironmentJson();
-            if (StringUtils.equals(environmentType, EnvironmentType.GROUP.name())) {
-                environmentMap = environmentGroupProjectService.getEnvMap(environmentGroupId);
-            } else if (StringUtils.equals(environmentType, EnvironmentType.JSON.name())) {
-                environmentMap = JSON.parseObject(environmentJson, Map.class);
+            if (apiScenarioWithBLOBs != null) {
+                String environmentType = apiScenarioWithBLOBs.getEnvironmentType();
+                String environmentGroupId = apiScenarioWithBLOBs.getEnvironmentGroupId();
+                String environmentJson = apiScenarioWithBLOBs.getEnvironmentJson();
+                if (StringUtils.equals(environmentType, EnvironmentType.GROUP.name())) {
+                    environmentMap = environmentGroupProjectService.getEnvMap(environmentGroupId);
+                } else if (StringUtils.equals(environmentType, EnvironmentType.JSON.name())) {
+                    environmentMap = JSON.parseObject(environmentJson, Map.class);
+                }
             }
         }
 
@@ -1342,20 +1344,6 @@ public class ApiAutomationService {
         ApiScenarioExample example = new ApiScenarioExample();
         example.createCriteria().andIdIn(request.getIds());
         List<ApiScenarioWithBLOBs> apiScenarioWithBLOBs = apiScenarioMapper.selectByExampleWithBLOBs(example);
-        // 处理引用数据
-        if (CollectionUtils.isNotEmpty(apiScenarioWithBLOBs)) {
-            apiScenarioWithBLOBs.forEach(item -> {
-                if (StringUtils.isNotEmpty(item.getScenarioDefinition())) {
-                    JSONObject scenario = JSONObject.parseObject(item.getScenarioDefinition());
-                    JSONArray hashTree = scenario.getJSONArray("hashTree");
-                    if (hashTree != null) {
-                        hashTreeService.setHashTree(hashTree);
-                        scenario.put("hashTree", hashTree);
-                    }
-                    item.setScenarioDefinition(JSON.toJSONString(scenario));
-                }
-            });
-        }
         return apiScenarioWithBLOBs;
     }
 

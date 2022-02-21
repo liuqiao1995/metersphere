@@ -1,26 +1,36 @@
 <template>
   <app-manage-item :title="title" :append-span="3" :middle-span="12" :prepend-span="9">
     <template #middle>
-      <span class="timing_name">{{ $t('project.keep_recent') }}</span>
-      <el-select v-model="selfQuantity" placeholder=" " size="mini"
-                 class="timing_select" :disabled="selfChoose">
-        <el-option
-          v-for="item in quantityOptions"
-          :key="item"
-          :label="item"
-          :value="item">
-        </el-option>
-      </el-select>
-      <el-select v-model="selfUnit" placeholder=" " size="mini"
-                 class="timing_select" :disabled="selfChoose">
-        <el-option
-          v-for="item in unitOptions"
-          :key="item.value"
-          :label="item.label"
-          :value="item.value">
-        </el-option>
-      </el-select>
-      <span class="timing_name" style="margin-left: 3px;">{{ $t('commons.report') }}</span>
+      <el-row>
+        <el-col :span="5">
+          <div class="timing_name" v-if="shareLink">{{ $t('commons.validity_period') }}</div>
+          <div class="timing_name" v-if="!shareLink">{{ $t('project.keep_recent') }}</div>
+        </el-col>
+        <el-col :span="16">
+          <el-select v-model="selfQuantity" placeholder=" " size="mini" filterable  default-first-option
+                     allow-create
+                     class="timing_select" :disabled="selfChoose">
+            <el-option
+              v-for="item in quantityOptions"
+              :key="item"
+              :label="item"
+              :value="item">
+            </el-option>
+          </el-select>
+          <el-select v-model="selfUnit" placeholder=" " size="mini"
+                     class="timing_select" :disabled="selfChoose">
+            <el-option
+              v-for="item in unitOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value">
+            </el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="3">
+          <div class="timing_name" v-if="!shareLink" style="margin-left: 3px;">{{ $t('commons.report') }}</div>
+        </el-col>
+      </el-row>
     </template>
     <template #append>
       <el-switch v-model="selfChoose" @change="chooseChange"></el-switch>
@@ -41,7 +51,7 @@ export default {
       type: Boolean,
       default() {
         return false;
-      }
+      },
     },
     expr: {
       type: String,
@@ -54,6 +64,22 @@ export default {
       default() {
         return "";
       }
+    },
+    shareLink: {
+      type: Boolean,
+      default() {
+        return false;
+      },
+    },
+    unitOptions:{
+      type: Array,
+      default() {
+        return [
+          {value: "D", label: this.$t('commons.date_unit.day')},
+          {value: "M", label: this.$t('commons.date_unit.month')},
+          {value: "Y", label: this.$t('commons.date_unit.year')},
+        ];
+      },
     }
   },
   watch: {
@@ -70,12 +96,12 @@ export default {
       selfUnit: "",
       selfChoose: this.choose,
       selfExpr: this.expr,
-      quantityOptions: 31,
-      unitOptions: [
-        {value: "D", label: this.$t('commons.date_unit.day')},
-        {value: "M", label: this.$t('commons.date_unit.month')},
-        {value: "Y", label: this.$t('commons.date_unit.year')},
-      ]
+      quantityOptions: [
+        "1","2","3","4","5","6","7","8","9","10",
+        "11","12","13","14","15","16","17","18","19","20",
+        "21","22","23","24","25","26","27","28","29","30",
+        "31"
+      ],
     }
   },
   methods: {
@@ -85,6 +111,19 @@ export default {
         this.selfChoose = false;
         return false;
       }
+      if(val && this.selfQuantity){
+        if(typeof this.selfQuantity!=='number'&&isNaN(parseInt(this.selfQuantity))){
+          this.$warning(this.$t('api_test.request.time')+this.$t('commons.type_of_num'));
+          this.selfChoose = false;
+          return false;
+        }
+        if(this.selfQuantity<=0||parseInt(this.selfQuantity)<=0){
+          this.$warning(this.$t('commons.adv_search.operators.gt')+"0");
+          this.selfChoose = false;
+          return false;
+        }
+      }
+
       this.$emit("update:choose", val);
       this.$emit("update:expr", this.selfQuantity + this.selfUnit);
       this.$emit("chooseChange");

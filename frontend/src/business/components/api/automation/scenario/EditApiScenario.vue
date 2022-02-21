@@ -926,7 +926,7 @@ export default {
       });
     },
     openHis() {
-      this.$refs.changeHistory.open(this.currentScenario.id, ["接口自动化", "Api automation", "接口自動化"]);
+      this.$refs.changeHistory.open(this.currentScenario.id, ["接口自动化", "Api automation", "接口自動化", "API_AUTOMATION"]);
     },
     setModule(id, data) {
       this.currentScenario.apiScenarioModuleId = id;
@@ -1149,7 +1149,7 @@ export default {
       if (!request.url) {
         request.url = "";
       }
-      if (referenced === 'REF' || !request.hashTree) {
+      if (!request.hashTree) {
         request.hashTree = [];
       }
       if (this.selectedTreeNode !== undefined) {
@@ -1190,6 +1190,7 @@ export default {
             const index = hashTree.findIndex(d => d.resourceId !== undefined && row.resourceId !== undefined && d.resourceId === row.resourceId)
             hashTree.splice(index, 1);
             this.sort();
+            this.showHide();
           }
         }
       });
@@ -1351,6 +1352,7 @@ export default {
     allowDrag(draggingNode, dropNode, dropType) {
       if (dropNode && draggingNode && dropType) {
         this.sort();
+        this.showHide();
       }
     },
     nodeExpand(data, node) {
@@ -1378,7 +1380,7 @@ export default {
           if (valid) {
             await this.setParameter();
             if (!this.currentScenario.versionId) {
-              if (this.$refs.versionHistory) {
+              if (this.$refs.versionHistory && this.$refs.versionHistory.currentVersion) {
                 this.currentScenario.versionId = this.$refs.versionHistory.currentVersion.id;
               }
             }
@@ -1772,6 +1774,9 @@ export default {
                 if(obj){
                   if(obj.hashTree){
                     for (let i = 0; i < obj.hashTree.length; i++) {
+                      if(!obj.hashTree[i].index){
+                        obj.hashTree[i].index = i+1;
+                      }
                       obj.hashTree[i].disabled = true;
                       if (!obj.hashTree[i].requestResult) {
                         obj.hashTree[i].requestResult = [{responseResult: {}}];
@@ -1784,7 +1789,7 @@ export default {
                       this.newOnSampleError = obj.onSampleError;
                     }
                   }
-
+                  this.dataProcessing(obj.hashTree);
                   this.newScenarioDefinition = obj.hashTree;
                   for (let i = 0; i < this.oldScenarioDefinition.length; i++) {
                     this.oldScenarioDefinition[i].disabled = true;
@@ -1802,8 +1807,9 @@ export default {
               this.oldData = this.currentScenario;
               this.newData = res.data;
               this.closeExpansion()
-              this.dialogVisible = true;
             }
+            this.sort();
+            this.dialogVisible = true;
           });
       })
     },

@@ -420,7 +420,7 @@ export default {
       return getCurrentUser();
     },
     openHis() {
-      this.$refs.changeHistory.open(this.httpForm.id, ["接口定义", "接口定義", "Api definition"]);
+      this.$refs.changeHistory.open(this.httpForm.id, ["接口定义", "接口定義", "Api definition", "API_DEFINITION"]);
     },
     mockSetting() {
       if (this.basisData.id) {
@@ -459,7 +459,7 @@ export default {
           this.setParameter();
 
           if (!this.httpForm.versionId) {
-            if (this.$refs.versionHistory) {
+            if (this.$refs.versionHistory && this.$refs.versionHistory.currentVersion) {
               this.httpForm.versionId = this.$refs.versionHistory.currentVersion.id;
             }
           }

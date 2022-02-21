@@ -13,6 +13,7 @@
                    :project-env-map="projectEnvListMap"
                    :environment-type.sync="runConfig.environmentType"
                    :group-id="runConfig.environmentGroupId"
+                   :has-option-group="true"
                    @setEnvGroup="setEnvGroup"
                    @setProjectEnvMap="setProjectEnvMap"
                    @showPopover="showPopover"
@@ -53,6 +54,13 @@
           </div>
         </el-col>
       </el-row>
+    </div>
+
+    <!--- 失败停止 -->
+    <div style="margin-top: 10px" v-if="runConfig.mode === 'serial'">
+      <el-checkbox v-model="runConfig.onSampleError" style="margin-left: 127px">
+        {{ $t("api_test.fail_to_stop") }}
+      </el-checkbox>
     </div>
 
     <div class="ms-mode-div" v-if="runConfig.reportType === 'setReport'">

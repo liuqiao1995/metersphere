@@ -1040,6 +1040,7 @@ public class ApiDefinitionService {
                     CollectionUtils.isNotEmpty(request.getTestElement().getHashTree().get(0).getHashTree()) ?
                     request.getTestElement().getHashTree().get(0).getHashTree().get(0).getName() : request.getId();
             ApiDefinitionExecResult result = ApiDefinitionExecResultUtil.add(testId, APITestStatus.Running.name(), request.getId());
+            result.setProjectId(request.getProjectId());
             result.setTriggerMode(TriggerMode.MANUAL.name());
             apiDefinitionExecResultMapper.insert(result);
         }
@@ -1320,6 +1321,8 @@ public class ApiDefinitionService {
     }
 
     public void deleteByParams(ApiBatchRequest request) {
+        ServiceUtils.getSelectAllIds(request, request.getCondition(),
+                (query) -> extApiDefinitionMapper.selectIds(query));
         List<String> ids = request.getIds();
         if (CollectionUtils.isEmpty(ids)) {
             return;

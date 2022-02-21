@@ -16,10 +16,8 @@ import io.metersphere.jmeter.utils.ScriptEngineUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jmeter.protocol.java.sampler.JSR223Sampler;
-import org.apache.jmeter.samplers.SampleResult;
 
-import javax.script.ScriptException;
+import javax.script.ScriptEngine;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.*;
@@ -292,6 +290,23 @@ public class MockApiUtils {
                         }
                     }
                 }
+                if (respObj.containsKey("statusCode")) {
+                    JSONArray statusCodeArray = respObj.getJSONArray("statusCode");
+                    if (statusCodeArray != null) {
+                        for (int i = 0; i < statusCodeArray.size(); i++) {
+                            JSONObject object = statusCodeArray.getJSONObject(i);
+                            if (object.containsKey("name")) {
+                                try {
+                                    int code = Integer.parseInt(object.getString("name"));
+                                    returnMap.put("code", code + "");
+                                    break;
+                                } catch (Exception e) {
+                                    LogUtil.error(e);
+                                }
+                            }
+                        }
+                    }
+                }
             } catch (Exception e) {
                 MSException.throwException(e);
             }
@@ -300,7 +315,27 @@ public class MockApiUtils {
         return returnMap;
     }
 
-    public static String getResultByResponseResult(JSONObject bodyObj, String url, Map<String, String> headerMap, RequestMockParams requestMockParams) {
+    public String getResultByResponseResult(JSONObject bodyObj, String url, Map<String, String> headerMap, RequestMockParams requestMockParams, boolean useScript) {
+        MockScriptEngineUtils scriptEngineUtils = new MockScriptEngineUtils();
+        ScriptEngine scriptEngine = null;
+        String scriptLanguage = "beanshell";
+        String script = null;
+        if (useScript) {
+            if (bodyObj.containsKey("scriptObject")) {
+                try {
+                    JSONObject scriptObj = bodyObj.getJSONObject("scriptObject");
+                    scriptLanguage = scriptObj.getString("scriptLanguage");
+                    script = scriptObj.getString("script");
+                } catch (Exception e) {
+                    LogUtil.error(e);
+                }
+            }
+        }
+        scriptEngine = scriptEngineUtils.getBaseScriptEngine(scriptLanguage, url, headerMap, requestMockParams);
+        if (StringUtils.isNotEmpty(script) && scriptEngine != null) {
+            scriptEngineUtils.runScript(scriptEngine, script);
+        }
+
         if (headerMap == null) {
             headerMap = new HashMap<>();
         }
@@ -357,92 +392,11 @@ public class MockApiUtils {
                         String raw = bodyObj.getString("apiRspRaw");
                         returnStr = raw;
                     }
-                } else if (StringUtils.equalsAnyIgnoreCase(type, "script")) {
-                    if (bodyObj.containsKey("scriptObject")) {
-                        JSONObject scriptObj = bodyObj.getJSONObject("scriptObject");
-                        String script = scriptObj.getString("script");
-                        String scriptLanguage = scriptObj.getString("scriptLanguage");
-
-                        String baseScript = parseScript(url, headerMap, requestMockParams);
-                        try {
-                            script = baseScript + script;
-                            if (StringUtils.isEmpty(scriptLanguage)) {
-                                scriptLanguage = "beanshell";
-                            }
-                            returnStr = runScript(script, scriptLanguage);
-                        } catch (Exception e) {
-                            LogUtil.error(e);
-                        }
-                    }
                 }
-
             }
+            returnStr = scriptEngineUtils.parseReportString(scriptEngine, returnStr);
             return returnStr;
         }
-    }
-
-    private static String parseScript(String url, Map<String, String> headerMap, RequestMockParams requestMockParams) {
-        StringBuffer scriptStringBuffer = new StringBuffer();
-        scriptStringBuffer.append("import java.util.HashMap;\n\n");
-        scriptStringBuffer.append("HashMap requestParams = new HashMap();\n");
-        scriptStringBuffer.append("requestParams.put(\"address\",\"" + url + "\");\n");
-        //写入请求头
-        for (Map.Entry<String, String> headEntry : headerMap.entrySet()) {
-            String headerKey = headEntry.getKey();
-            String headerValue = headEntry.getValue();
-            scriptStringBuffer.append("requestParams.put(\"header." + headerKey + "\",\"" + headerValue + "\");\n");
-        }
-        //写入body参数
-        if (requestMockParams.getBodyParams() != null) {
-            if (requestMockParams.getBodyParams().size() == 1) {
-                //参数是jsonObject
-                JSONObject bodyParamObj = requestMockParams.getBodyParams().getJSONObject(0);
-                for (String key : bodyParamObj.keySet()) {
-                    String value = String.valueOf(bodyParamObj.get(key));
-                    value = StringUtils.replace(value, "\\", "\\\\");
-                    value = StringUtils.replace(value, "\"", "\\\"");
-                    scriptStringBuffer.append("requestParams.put(\"body." + key + "\",\"" + value + "\");\n");
-                    if (StringUtils.equalsIgnoreCase(key, "raw")) {
-                        scriptStringBuffer.append("requestParams.put(\"bodyRaw\",\"" + value + "\");\n");
-                    }
-                }
-                String jsonBody = bodyParamObj.toJSONString();
-                jsonBody = StringUtils.replace(jsonBody, "\\", "\\\\");
-                jsonBody = StringUtils.replace(jsonBody, "\"", "\\\"");
-                scriptStringBuffer.append("requestParams.put(\"body.json\",\"" + jsonBody + "\");\n");
-            } else {
-                scriptStringBuffer.append("requestParams.put(\"bodyRaw\",\"" + requestMockParams.getBodyParams().toJSONString() + "\");\n");
-            }
-
-        }
-        //写入query参数
-        if (requestMockParams.getQueryParamsObj() != null) {
-            JSONObject queryParamsObj = requestMockParams.getQueryParamsObj();
-            for (String key : queryParamsObj.keySet()) {
-                String value = String.valueOf(queryParamsObj.get(key));
-                value = StringUtils.replace(value, "\\", "\\\\");
-                value = StringUtils.replace(value, "\"", "\\\"");
-                scriptStringBuffer.append("requestParams.put(\"query." + key + "\",\"" + value + "\");\n");
-            }
-        }
-        //写入rest参数
-        if (requestMockParams.getRestParamsObj() != null) {
-            JSONObject restParamsObj = requestMockParams.getRestParamsObj();
-            for (String key : restParamsObj.keySet()) {
-                String value = String.valueOf(restParamsObj.get(key));
-                scriptStringBuffer.append("requestParams.put(\"rest." + key + "\",\"" + value + "\");\n");
-            }
-        }
-        return scriptStringBuffer.toString();
-    }
-
-    private static String runScript(String script, String scriptLanguage) throws ScriptException {
-        JSR223Sampler jmeterScriptSampler = new JSR223Sampler();
-        jmeterScriptSampler.setScriptLanguage(scriptLanguage);
-        jmeterScriptSampler.setScript(script);
-        SampleResult result = jmeterScriptSampler.sample(null);
-        return result.getResponseDataAsString();
-
     }
 
     public static RequestMockParams getParams(String urlParams, String apiPath, JSONObject queryParamsObject, JSON paramJson, boolean isPostRequest) {
@@ -692,25 +646,54 @@ public class MockApiUtils {
         return returnCondition;
     }
 
-    public static boolean checkParamsCompliance(JSONObject queryParamsObj, List<MockConfigRequestParams> mockConfigRequestParamList) {
-        if (CollectionUtils.isNotEmpty(mockConfigRequestParamList)) {
-            for (MockConfigRequestParams params : mockConfigRequestParamList) {
-                String key = params.getKey();
-                if (queryParamsObj.containsKey(key)) {
-                    boolean isMatch = MockApiUtils.isValueMatch(String.valueOf(queryParamsObj.get(key)), params);
-                    if (!isMatch) {
+    public static boolean checkParamsCompliance(JSONObject queryParamsObj, List<MockConfigRequestParams> mockConfigRequestParamList, boolean isAllMatch) {
+        if (isAllMatch) {
+            if (CollectionUtils.isNotEmpty(mockConfigRequestParamList)) {
+                for (MockConfigRequestParams params : mockConfigRequestParamList) {
+                    String key = params.getKey();
+                    if (queryParamsObj.containsKey(key)) {
+                        boolean isMatch = MockApiUtils.isValueMatch(String.valueOf(queryParamsObj.get(key)), params);
+                        if (!isMatch) {
+                            return false;
+                        }
+                    } else {
                         return false;
                     }
                 }
+            }
+            return true;
+        } else {
+            if (CollectionUtils.isNotEmpty(mockConfigRequestParamList)) {
+                for (MockConfigRequestParams params : mockConfigRequestParamList) {
+                    String key = params.getKey();
+                    if (queryParamsObj.containsKey(key)) {
+                        boolean isMatch = MockApiUtils.isValueMatch(String.valueOf(queryParamsObj.get(key)), params);
+                        if (isMatch) {
+                            return true;
+                        }
+                    }
+                }
+            } else {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public static boolean checkParamsCompliance(JSONObject queryParamsObj, MockConfigRequestParams mockConfigRequestParams) {
+        if (mockConfigRequestParams != null) {
+            String key = mockConfigRequestParams.getKey();
+            if (queryParamsObj.containsKey(key)) {
+                return MockApiUtils.isValueMatch(String.valueOf(queryParamsObj.get(key)), mockConfigRequestParams);
             }
         }
         return true;
     }
 
-    public static boolean checkParamsCompliance(JSONArray jsonArray, List<MockConfigRequestParams> mockConfigRequestParamList) {
+    public static boolean checkParamsCompliance(JSONArray jsonArray, List<MockConfigRequestParams> mockConfigRequestParamList, boolean isAllMatch) {
         for (int i = 0; i < jsonArray.size(); i++) {
             JSONObject obj = jsonArray.getJSONObject(i);
-            boolean isMatch = checkParamsCompliance(obj, mockConfigRequestParamList);
+            boolean isMatch = checkParamsCompliance(obj, mockConfigRequestParamList, isAllMatch);
             if (isMatch) {
                 return true;
             }
@@ -718,7 +701,7 @@ public class MockApiUtils {
         return false;
     }
 
-    private static boolean isValueMatch(String requestParam, MockConfigRequestParams params) {
+    public static boolean isValueMatch(String requestParam, MockConfigRequestParams params) {
         if (StringUtils.equals(params.getCondition(), MockParamConditionEnum.VALUE_EQUALS.name())) {
             return StringUtils.equals(requestParam, params.getValue());
         } else if (StringUtils.equals(params.getCondition(), MockParamConditionEnum.VALUE_NOT_EQUALS.name())) {
@@ -735,7 +718,7 @@ public class MockApiUtils {
         } else if (StringUtils.equals(params.getCondition(), MockParamConditionEnum.LENGTH_NOT_EQUALS.name())) {
             try {
                 int length = Integer.parseInt(params.getValue());
-                return requestParam.length() == length;
+                return requestParam.length() != length;
             } catch (Exception e) {
                 return false;
             }

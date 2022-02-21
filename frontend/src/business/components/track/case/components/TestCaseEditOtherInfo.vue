@@ -14,7 +14,7 @@
 <!--        <el-form-item :label="$t('test_track.related_requirements')" :label-width="labelWidth"-->
 <!--                      prop="demandId">-->
 
-<!--          <el-cascader v-model="demandValue" :show-all-levels="false" :options="demandOptions" clearable filterable/>-->
+<!--          <el-cascader v-model="demandValue" :show-all-levels="false" :options="demandOptions" clearable filterable :filter-method="filterDemand"/>-->
 <!--        </el-form-item>-->
 <!--      </el-col>-->
 <!--      <el-col :span="7">-->
@@ -31,7 +31,9 @@
 <!--        :plan-id="planId"-->
 <!--        :is-copy="isCopy"-->
 <!--        :read-only="readOnly && !(isTestPlan)"-->
-<!--        :case-id="caseId" ref="issue"/>-->
+<!--        :plan-case-id="planId ? this.form.id : null"-->
+<!--        :case-id="caseId"-->
+<!--        ref="issue"/>-->
 <!--    </el-tab-pane>-->
 
     <el-tab-pane :label="$t('commons.relationship.name')" name="relationship">
@@ -308,6 +310,12 @@ export default {
         }
         pathArray.pop();
       });
+    },
+    filterDemand(node, keyword) {
+      if (keyword && node.text.toLowerCase().indexOf(keyword.toLowerCase()) !== -1) {
+        return true;
+      }
+      return false;
     }
   }
 };

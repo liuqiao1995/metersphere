@@ -17,8 +17,19 @@
       @save="save"
       ref="minder"
     />
-    <IssueRelateList :case-id="getCurCaseId()"  @refresh="refreshRelateIssue" ref="issueRelate"/>
-    <test-plan-issue-edit :is-minder="true" :plan-id="null" :case-id="getCurCaseId()" @refresh="refreshIssue"  ref="issueEdit"/>
+
+    <IssueRelateList
+      :case-id="getCurCaseId()"
+      @refresh="refreshRelateIssue"
+      ref="issueRelate"/>
+
+    <test-plan-issue-edit
+      :is-minder="true"
+      :plan-id="null"
+      :case-id="getCurCaseId()"
+      @refresh="refreshIssue"
+      ref="issueEdit"/>
+
   </div>
 
 </template>
@@ -87,6 +98,9 @@ name: "TestCaseMinder",
     moduleOptions() {
       return this.$store.state.testCaseModuleOptions;
     },
+    testCaseDefaultValue() {
+      return this.$store.state.testCaseDefaultValue;
+    },
     disabled() {
       return !hasPermission('PROJECT_TRACK_CASE:READ+EDIT');
     },
@@ -118,7 +132,7 @@ name: "TestCaseMinder",
   methods: {
     handleAfterMount() {
       listenNodeSelected(() => {
-        // 展开模块下的用例
+        // 点击模块，加载模块下的用例
         loadSelectNodes(this.getParam(),  getTestCasesForMinder, null, getMinderExtraNode);
       });
 
@@ -289,10 +303,14 @@ name: "TestCaseMinder",
       }
 
       this.saveModuleNodeMap.set(module.id, node);
+
+      if (module.level > 8) {
+        this.throwError(this.$t('commons.module_deep_limit'));
+      }
       this.saveModules.push(module);
     },
     buildExtraNode(data, parent, root) {
-      if (data.type !== 'node' && data.type !== 'tmp' && parent && isModuleNodeData(parent.data) && data.changed === true) {
+      if (data.type !== 'node' && data.type !== 'tmp' && parent && isModuleNodeData(parent) && data.changed === true) {
         // 保存额外信息，只保存模块下的一级子节点
         let nodes = this.saveExtraNode[parent.id];
         if (!nodes) {
@@ -323,6 +341,10 @@ name: "TestCaseMinder",
       let isChange = false;
 
       let nodeId = parent ? (parent.newId ? parent.newId : parent.id) : "";
+      let priorityDefaultValue = (data.priority ? 'P' + data.priority - 1 :
+        (this.testCaseDefaultValue['用例等级'] ? this.testCaseDefaultValue['用例等级'] : 'P' + 0)
+      );
+
       let testCase = {
         id: data.id,
         name: data.text,
@@ -330,12 +352,13 @@ name: "TestCaseMinder",
         nodePath: getNodePath(nodeId, this.moduleOptions),
         type: data.type ? data.type : 'functional',
         method: data.method ? data.method: 'manual',
-        maintainer: data.maintainer,
-        priority: 'P' + (data.priority ? data.priority - 1 : 0),
+        maintainer: this.testCaseDefaultValue['责任人'] ? this.testCaseDefaultValue['责任人'] : data.maintainer,
+        priority: priorityDefaultValue,
         prerequisite: "",
         remark: "",
         stepDescription: "",
         expectedResult: "",
+        status: this.testCaseDefaultValue['用例状态'],
         steps: "[]"
       };
       if (data.changed) isChange = true;

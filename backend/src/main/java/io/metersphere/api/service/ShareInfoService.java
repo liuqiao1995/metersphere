@@ -8,6 +8,7 @@ import io.metersphere.base.domain.*;
 import io.metersphere.base.mapper.ShareInfoMapper;
 import io.metersphere.base.mapper.TestPlanReportMapper;
 import io.metersphere.base.mapper.ext.ExtShareInfoMapper;
+import io.metersphere.commons.constants.ProjectApplicationType;
 import io.metersphere.commons.constants.ShareType;
 import io.metersphere.commons.exception.MSException;
 import io.metersphere.commons.json.JSONSchemaGenerator;
@@ -15,6 +16,7 @@ import io.metersphere.commons.utils.BeanUtils;
 import io.metersphere.commons.utils.CommonBeanFactory;
 import io.metersphere.commons.utils.LogUtil;
 import io.metersphere.commons.utils.SessionUtils;
+import io.metersphere.service.ProjectApplicationService;
 import io.metersphere.track.service.TestPlanApiCaseService;
 import io.metersphere.track.service.TestPlanScenarioCaseService;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
+
+import static io.metersphere.api.service.utils.ShareUtill.getTimeMills;
 
 /**
  * @author song.tianyang
@@ -44,6 +48,8 @@ public class ShareInfoService {
     TestPlanScenarioCaseService testPlanScenarioCaseService;
     @Resource
     TestPlanReportMapper testPlanReportMapper;
+    @Resource
+    private ProjectApplicationService projectApplicationService;
 
     public List<ApiDocumentInfoDTO> findApiDocumentSimpleInfoByRequest(ApiDocumentRequest request) {
         if (this.isParamLegitimacy(request)) {
@@ -510,9 +516,34 @@ public class ShareInfoService {
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void validateExpired(ShareInfo shareInfo) {
-        // 有效期24小时
-        if (shareInfo == null || System.currentTimeMillis() - shareInfo.getUpdateTime() > 1000 * 60 * 60 * 24) {
-            shareInfoMapper.deleteByPrimaryKey(shareInfo.getId());
+        // 有效期根据类型从ProjectApplication中获取
+        if(shareInfo == null ){
+            MSException.throwException("连接已失效，请重新获取!");
+        }
+        String type = "";
+        if(shareInfo.getShareType().equals("PERFORMANCE_REPORT")){
+            type = ProjectApplicationType.PERFORMANCE_SHARE_REPORT_TIME.toString();
+        }
+        if(shareInfo.getShareType().equals("PLAN_DB_REPORT")){
+            type = ProjectApplicationType.TRACK_SHARE_REPORT_TIME.toString();
+        }
+        if(StringUtils.isBlank(type)){
+            millisCheck(System.currentTimeMillis() - shareInfo.getUpdateTime() ,1000 * 60 * 60 * 24,shareInfo.getId());
+        }else{
+            ProjectApplication projectApplication = projectApplicationService.getProjectApplication(SessionUtils.getCurrentProjectId(),type);
+            if(projectApplication.getProjectId()==null){
+                millisCheck(System.currentTimeMillis() - shareInfo.getUpdateTime() ,1000 * 60 * 60 * 24,shareInfo.getId());
+            }else {
+                String expr= projectApplication.getTypeValue();
+                long timeMills = getTimeMills(shareInfo.getUpdateTime(),expr);
+                millisCheck(System.currentTimeMillis(),timeMills,shareInfo.getId());
+            }
+        }
+    }
+
+    private void millisCheck(long compareMillis, long millis,String shareInfoId) {
+        if (compareMillis>millis) {
+            shareInfoMapper.deleteByPrimaryKey(shareInfoId);
             MSException.throwException("连接已失效，请重新获取!");
         }
     }

@@ -28,6 +28,8 @@
                 </app-manage-item>
                 <timing-item ref="trackTimingItem" :choose.sync="form.cleanTrackReport" :expr.sync="form.cleanTrackReportExpr"
                              @chooseChange="chooseChange" :title="$t('project.timing_clean_plan_report')"/>
+                <timing-item ref="trackTimingItem" :choose.sync="application.shareReport" :expr.sync="application.typeValue" :share-link="true" :unit-options="applyUnitOptions"
+                             @chooseChange="chooseChangeApply" :title="$t('report.report_sharing_link')"/>
               </el-row>
             </el-tab-pane>
 
@@ -92,6 +94,8 @@
               <el-row style="margin-top: 15px">
                 <timing-item ref="loadTimingItem" :choose.sync="form.cleanLoadReport" :expr.sync="form.cleanLoadReportExpr"
                              @chooseChange="chooseChange" :title="$t('project.timing_clean_load_report')"/>
+                <timing-item ref="trackTimingItem" :choose.sync="application.shareReport" :expr.sync="application.typeValue" :share-link="true" :unit-options="applyUnitOptions"
+                             @chooseChange="chooseChangeApply" :title="$t('report.report_sharing_link')"/>
               </el-row>
             </el-tab-pane>
 
@@ -125,6 +129,11 @@ export default {
     MsMainContainer,
     MsContainer
   },
+  watch: {
+    activeName(val) {
+      this.getProjectApplication();
+    },
+  },
   data() {
     return {
       activeName: 'test_track',
@@ -136,12 +145,22 @@ export default {
         cleanLoadReport: false,
         cleanLoadReportExpr: ""
       },
+      application:{
+        shareReport:'',
+        typeValue:'',
+      },
       count: 0,
       isXpack: false,
       result: {},
       quantity: "",
       unit: "",
-      choose: false
+      choose: false,
+      applyUnitOptions: [
+        {value: "H", label: this.$t('commons.date_unit.hour')},
+        {value: "D", label: this.$t('commons.date_unit.day')},
+        {value: "M", label: this.$t('commons.date_unit.month')},
+        {value: "Y", label: this.$t('commons.date_unit.year')},
+      ]
     };
   },
   created() {
@@ -165,10 +184,40 @@ export default {
         this.init();
       });
     },
+    chooseChangeApply(){
+      if(!this.application.shareReport){
+          return;
+      }
+      this.$post("/project_application/update", this.application, () => {
+        this.$success(this.$t('commons.save_success'));
+        this.init();
+      }, () => {
+        this.init();
+      });
+    },
+    getProjectApplication(){
+      let type;
+      if(this.activeName==='test_track'){
+        type = 'TRACK_SHARE_REPORT_TIME'
+      }else if(this.activeName==='performance'){
+        type = 'PERFORMANCE_SHARE_REPORT_TIME'
+      }else if(this.activeName==='api'){
+        type = 'API_SHARE_REPORT_TIME'
+      }
+      if(type){
+        this.$get('/project_application/get/' + this.projectId+"/"+type, res => {
+          if(res.data){
+            res.data.shareReport = true;
+            this.application = res.data;
+          }
+        });
+      }
+    },
     init() {
       this.result = this.$get('/project/get/' + this.projectId, res => {
         this.form = res.data;
-      })
+      });
+      this.getProjectApplication();
     }
   }
 };

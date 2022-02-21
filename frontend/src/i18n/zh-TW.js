@@ -1,6 +1,7 @@
 export default {
   commons: {
     project_permission: '請先添加該項目權限',
+    no_permission:'暫無權限',
     failure_continues: "失敗繼續",
     full_screen_editing: "全屏編輯",
     trash: "回收站",
@@ -24,6 +25,7 @@ export default {
     import_success: '導入成功',
     import_mode: '導入模式',
     import_module: '導入模塊',
+    module_deep_limit: '模塊深度不超過8層!',
     import_user: '導入用戶',
     export: '導出',
     please_fill_in_the_template: '請填寫模版內容',
@@ -32,6 +34,9 @@ export default {
     cut_back_new_version: '切回新版',
     comment: '評論',
     close_schedule: '關閉定時任務',
+    open_schedule: '開啟定時任務',
+    schedule_switch: '定時任務開關',
+    schedule_cron_title: '定時任務時間運算式',
     review_complete: '評審完成',
     examples: '示例',
     help_documentation: '幫助文檔',
@@ -157,6 +162,7 @@ export default {
     weeks_5: '周五',
     weeks_6: '周六',
     date_unit: {
+      hour: "小時",
       day: "天",
       month: "月",
       year: "年"
@@ -222,7 +228,9 @@ export default {
     debug_history: "調試歷史",
     testing: "測試中",
     edit_info: "編輯詳情",
-    enable_scene: "啟用場景環境",
+    enable_scene: "原場景環境",
+    variable_scene: "原場景变量",
+    reference_settings: "引用设置",
     enable_scene_info: "啟用場景環境：當前步驟使用場景原始環境配置運行",
     environment: "運行環境",
     run_success: "執行成功",
@@ -234,6 +242,8 @@ export default {
     follow_success: "關註成功",
     cancel_follow_success: "取消關註成功",
     type: "類型",
+    type_of_num:"只能輸入數字類型",
+    validity_period:'有效期',
     please_select_a_deadline: "請選擇截止時間",
     relationship: {
       name: '依賴關系',
@@ -428,6 +438,7 @@ export default {
     sync_other_info: "復製以下信息到新版本",
     delete_current_version: '列表版本',
     delete_all_version: '全部版本',
+    change_password_tips: '您的密碼是系統初始密碼，請盡快修改密碼',
   },
   login: {
     normal_Login: "普通登錄",
@@ -866,6 +877,7 @@ export default {
     admin_not_allow_delete: '系統用戶組不支持刪除!',
     select_type: '請選擇所屬類型',
     system: '系統',
+    personal: '個人信息',
     organization: '組織',
     workspace: '工作空間',
     project: '項目',
@@ -898,6 +910,7 @@ export default {
     api_test_report: '接口測試報告',
     load_test_report: '性能測試報告',
     test_plan_report: '測試計劃報告',
+    report_sharing_link: '報告分享鏈接',
     recent: '我最近的報告',
     search_by_name: '根據名稱搜索',
     batch_add_monitor_tips: '格式：名稱,IP,Port,描述<br/>如：項目1,192.168.1.52,9100,測試',
@@ -997,6 +1010,7 @@ export default {
     ramp_up_time_within: '在',
     ramp_up_time_minutes: '秒內，分',
     ramp_up_time_seconds: '秒內增加並發用戶',
+    ramp_up_tips: 'RampUp 過大，圖表渲染卡頓不予展示，這並不影響測試執行，請以實際結果為準',
     iterate_num: '叠代次數',
     by_iteration: '按叠代次數',
     by_duration: '按持續時間',
@@ -1040,6 +1054,7 @@ export default {
     delete_threadgroup_confirm: '確認刪除場景',
     scenario_list: '場景列表',
     scenario_name: "場景名稱",
+    report_type: "报告类型",
     upload_jmx: '上傳 JMX 文件',
     exist_jmx: '已存在的文件',
     other_resource: '資源文件',
@@ -1373,6 +1388,7 @@ export default {
       loop_input_val: "變量前綴",
       loop_message: "當前循環下超過一個請求，不能關閉狀態",
       env_message: "請在環境配置中為該步驟所屬項目選擇運行環境",
+      debug_message: "當前步驟是禁用狀態不能調試",
       request_total: "請求",
       request_success: "成功",
       request_error: "失敗",
@@ -1405,7 +1421,9 @@ export default {
       request_timeout: "鏈接超時",
       response_timeout: "響應超時",
       repeat_warning: "啟用條件為 '無' 的域名已經存在！",
-      copy_warning: "啟用條件為 '無' 的域名不支持複製！"
+      copy_warning: "啟用條件為 '無' 的域名不支持複製！",
+      path_warning: "路徑不能為空",
+      module_warning: "模塊不能為空"
     },
     scenario: {
       id: "場景ID",
@@ -1441,6 +1459,8 @@ export default {
       scenario_warning: "引用的場景步驟及子步驟都無法添加其他步驟",
       scenario_step_warning: "當前步驟下不能添加其他步驟",
       scenario_error: "不能引用或復製自身！",
+      integrated: "集合",
+      independent: "獨立",
     },
     request: {
       debug: "調試",
@@ -1829,6 +1849,7 @@ export default {
         swagger_schedule: "swagger",
         confirm: {
           close_title: "要關閉這條定時任務嗎？",
+          open_title: "要開啟這條定時任務嗎？",
         }
       }
     },
@@ -1849,6 +1870,14 @@ export default {
       before_the_pre_script_step: "步驟內前置腳本前",
       after_the_post_script_step: "步驟內後置腳本後",
       before_the_post_script_step: "步驟內後置腳本前",
+      global_script_config: "全局腳本配置",
+
+      pre_script_filter_request_type: "前置腳本過濾請求類型",
+      post_script_filter_request_type: "後置腳本過濾請求類型",
+      pre_script_exec_order: "前置腳本執行順序",
+      post_script_exec_order: "後置腳本執行順序",
+      pre_link_scenario_result: "前置關聯場景結果",
+      post_link_scenario_result: "後置關聯場景結果",
     }
   },
   api_report: {
@@ -2111,6 +2140,13 @@ export default {
       test_plan_load_case_count: "性能用例數",
       test_plan_component_case_count: "步驟用例數",
       data_name: "數據名稱",
+      test_plan_batch_switch: "批量開/關定時任務",
+      batch_update_schedule_enable: '更新{0}個測試計畫的定時任務狀態為',
+      batch_update_schedule_enable_alert: '注意：只能更新已設定了定時任務的測試計畫',
+      next_run_time: '下次運行時間',
+      schedule_enabled: '已開啟',
+      check_schedule_enabled: '您勾選的數據檢測到有{0}條定時任務可以修改',
+      no_check_schedule_enabled: '您勾選的數據沒有檢測到定時任務',
       load_case: {
         case: "性能用例",
         execution_status: "執行狀態",
@@ -3001,6 +3037,13 @@ export default {
       upload: "點擊上傳",
       delete: "刪除",
       read: "查看腳本",
+    },
+    personal_information:{
+      name:'設置',
+      personal_setting: '個人設置',
+      api_keys: 'API Keys',
+      edit_password: "修改密碼",
+      third_account: '第三方平臺賬號',
     },
     other: {
       track: "測試跟蹤",

@@ -224,7 +224,7 @@ public class MsHTTPSamplerProxy extends MsTestElement {
             MsDNSCacheManager.addEnvironmentDNS(httpSamplerTree, this.getName(), config.getConfig().get(this.getProjectId()), httpConfig);
         }
 
-        if (this.authManager != null) {
+        if (this.authManager != null && StringUtils.equals(this.authManager.getVerification(), "Basic Auth")) {
             this.authManager.setAuth(httpSamplerTree, this.authManager, sampler);
         }
 
@@ -421,14 +421,15 @@ public class MsHTTPSamplerProxy extends MsTestElement {
                             if (StringUtils.isNotBlank(this.getPath())) {
                                 envPath += this.getPath();
                             }
+                            sampler.setPort(httpConfig.getPort());
                             if (StringUtils.isNotEmpty(httpConfig.getDomain())) {
                                 sampler.setDomain(URLDecoder.decode(httpConfig.getDomain(), "UTF-8"));
                                 sampler.setProtocol(httpConfig.getProtocol());
                             } else {
                                 sampler.setDomain("");
                                 sampler.setProtocol("");
+                                sampler.setPort(-1);
                             }
-                            sampler.setPort(httpConfig.getPort());
                         } else {
                             URL urlObject = new URL(this.path);
                             envPath = StringUtils.equals(urlObject.getPath(), "/") ? "" : urlObject.getFile();

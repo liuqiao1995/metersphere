@@ -37,7 +37,7 @@
                 width="300">
                 <p>{{ shareUrl }}</p>
                 <span style="color: red;float: left;margin-left: 10px;">{{
-                    $t('test_track.report.valid_for_24_hours')
+                    $t('commons.validity_period')+application.typeValue
                   }}</span>
                 <div style="text-align: right; margin: 0">
                   <el-button type="primary" size="mini" :disabled="!shareUrl"
@@ -153,7 +153,7 @@ import MsReportTestOverview from './components/TestOverview';
 import MsContainer from "../../common/components/MsContainer";
 import MsMainContainer from "../../common/components/MsMainContainer";
 
-import {exportPdf, hasPermission} from "@/common/js/utils";
+import {exportPdf, getCurrentProjectID, hasPermission} from "@/common/js/utils";
 import html2canvas from 'html2canvas';
 import MsPerformanceReportExport from "./PerformanceReportExport";
 import {Message} from "element-ui";
@@ -216,6 +216,7 @@ export default {
       ],
       testDeleted: false,
       shareUrl: "",
+      application:{}
     };
   },
   methods: {
@@ -374,6 +375,28 @@ export default {
       generateShareInfoWithExpired(pram, (data) => {
         let thisHost = window.location.host;
         this.shareUrl = thisHost + "/sharePerformanceReport" + data.shareUrl;
+      });
+      this.getProjectApplication();
+    },
+    getProjectApplication(){
+      this.$get('/project_application/get/' + getCurrentProjectID()+"/PERFORMANCE_SHARE_REPORT_TIME", res => {
+        if(res.data){
+          let quantity = res.data.typeValue.substring(0, res.data.typeValue.length - 1);
+          let unit = res.data.typeValue.substring(res.data.typeValue.length - 1);
+          if(unit==='H'){
+            res.data.typeValue = quantity+this.$t('commons.date_unit.hour');
+          }else
+          if(unit==='D'){
+            res.data.typeValue = quantity+this.$t('commons.date_unit.day');
+          }else
+          if(unit==='M'){
+            res.data.typeValue = quantity+this.$t('commons.date_unit.month');
+          }else
+          if(unit==='Y'){
+            res.data.typeValue = quantity+this.$t('commons.date_unit.year');
+          }
+          this.application = res.data;
+        }
       });
     },
     exportReportReset() {

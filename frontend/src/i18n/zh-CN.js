@@ -1,6 +1,7 @@
 export default {
   commons: {
     project_permission: '请先添加该项目权限',
+    no_permission:'暂无权限',
     failure_continues: "失败继续",
     full_screen_editing: "全屏编辑",
     trash: "回收站",
@@ -24,6 +25,7 @@ export default {
     import_success: '导入成功',
     import_mode: '导入模式',
     import_module: '导入模块',
+    module_deep_limit: '模块深度不超过8层!',
     import_user: '导入用户',
     export: '导出',
     please_fill_in_the_template: '请填写模版内容',
@@ -32,6 +34,9 @@ export default {
     cut_back_new_version: '切回新版',
     comment: '评论',
     close_schedule: '关闭定时任务',
+    open_schedule: '开启定时任务',
+    schedule_switch: '定时任务开关',
+    schedule_cron_title: '定时任务时间表达式',
     review_complete: '评审完成',
     examples: '示例',
     help_documentation: '帮助文档',
@@ -157,6 +162,7 @@ export default {
     weeks_5: '周五',
     weeks_6: '周六',
     date_unit: {
+      hour: "小时",
       day: "天",
       month: "月",
       year: "年"
@@ -222,7 +228,9 @@ export default {
     debug_history: "调试历史",
     testing: "测试中",
     edit_info: "编辑详情",
-    enable_scene: "启用场景环境",
+    enable_scene: "原场景环境",
+    variable_scene: "原场景变量",
+    reference_settings: "引用设置",
     enable_scene_info: "启用场景环境：当前步骤使用场景原始环境配置运行",
     environment: "运行环境",
     run_success: "执行成功",
@@ -234,6 +242,8 @@ export default {
     follow_success: "关注成功",
     cancel_follow_success: "取消关注成功",
     type: "类型",
+    type_of_num:"只能输入数字类型",
+    validity_period:'有效期',
     please_select_a_deadline: "请选择截止时间",
     relationship: {
       name: '依赖关系',
@@ -428,6 +438,7 @@ export default {
     sync_other_info: "复制以下信息到新版本",
     delete_current_version: '列表版本',
     delete_all_version: '全部版本',
+    change_password_tips: '您的密码是系统初始密码，请尽快修改密码',
   },
   login: {
     normal_Login: "普通登录",
@@ -866,6 +877,7 @@ export default {
     admin_not_allow_delete: '系统用户组不支持删除!',
     select_type: '请选择所属类型',
     system: '系统',
+    personal: '个人信息',
     organization: '组织',
     workspace: '工作空间',
     project: '项目',
@@ -898,6 +910,7 @@ export default {
     api_test_report: '接口测试报告',
     load_test_report: '性能测试报告',
     test_plan_report: '测试计划报告',
+    report_sharing_link:'报告分享链接',
     recent: '我最近的报告',
     search_by_name: '根据名称搜索',
     batch_add_monitor_tips: '格式：名称,IP,Port,描述<br/>如：项目1,192.168.1.52,9100,测试',
@@ -997,6 +1010,7 @@ export default {
     ramp_up_time_within: '在',
     ramp_up_time_minutes: '秒内，分',
     ramp_up_time_seconds: '秒内增加并发用户',
+    ramp_up_tips: 'RampUp 过大，图表渲染卡顿不予展示，这并不影响测试执行，请以实际结果为准',
     iterate_num: '迭代次数',
     by_iteration: '按迭代次数',
     by_duration: '按持续时间',
@@ -1040,6 +1054,7 @@ export default {
     delete_threadgroup_confirm: '确认删除场景',
     scenario_list: '场景列表',
     scenario_name: "场景名称",
+    report_type: "报告类型",
     upload_jmx: '上传 JMX 文件',
     exist_jmx: '已存在的文件',
     other_resource: '资源文件',
@@ -1373,6 +1388,7 @@ export default {
       loop_input_val: "变量前缀",
       loop_message: "当前循环下超过一个请求，不能关闭状态",
       env_message: "请在环境配置中为该步骤所属项目选择运行环境",
+      debug_message: "当前步骤是禁用状态不能调试",
       request_total: "请求",
       request_success: "成功",
       request_error: "失败",
@@ -1405,7 +1421,9 @@ export default {
       request_timeout: "链接超时",
       response_timeout: "响应超时",
       repeat_warning: "启用条件为 '无' 的域名已经存在！",
-      copy_warning: "启用条件为 '无' 的域名不支持复制！"
+      copy_warning: "启用条件为 '无' 的域名不支持复制！",
+      path_warning: "路径不能为空",
+      module_warning: "模块不能为空"
     },
     scenario: {
       id: "场景ID",
@@ -1441,6 +1459,8 @@ export default {
       scenario_warning: "引用的场景步骤及子步骤都无法添加其他步骤",
       scenario_step_warning: "当前步骤下不能添加其他步骤",
       scenario_error: "不能引用或复制自身！",
+      integrated: "集合",
+      independent: "独立",
     },
     request: {
       debug: "调试",
@@ -1829,6 +1849,7 @@ export default {
         swagger_schedule: "swagger",
         confirm: {
           close_title: "要关闭这条定时任务吗？",
+          open_title: "要开启这条定时任务吗？",
         }
       }
     },
@@ -1849,6 +1870,14 @@ export default {
       before_the_pre_script_step: "步骤内前置脚本前",
       after_the_post_script_step: "步骤内后置脚本后",
       before_the_post_script_step: "步骤内后置脚本前",
+      global_script_config: "全局脚本配置",
+
+      pre_script_filter_request_type: "前置脚本过滤请求类型",
+      post_script_filter_request_type: "后置脚本过滤请求类型",
+      pre_script_exec_order: "前置脚本执行顺序",
+      post_script_exec_order: "后置脚本执行顺序",
+      pre_link_scenario_result: "前置关联场景结果",
+      post_link_scenario_result: "后置关联场景结果",
     }
   },
   api_report: {
@@ -2112,6 +2141,13 @@ export default {
       test_plan_load_case_count: "性能用例数",
       test_plan_component_case_count: "步骤用例数",
       data_name: "数据名称",
+      test_plan_batch_switch: "批量开/关定时任务",
+      batch_update_schedule_enable: '更新{0}个测试计划的定时任务状态为',
+      batch_update_schedule_enable_alert: '注意：只能更新已设置了定时任务的测试计划',
+      next_run_time: '下次运行时间',
+      schedule_enabled: '已开启',
+      check_schedule_enabled: '您勾选的数据检测到有{0}条定时任务可以修改',
+      no_check_schedule_enabled: '您勾选的数据没有检测到定时任务',
       load_case: {
         case: "性能用例",
         execution_status: "执行状态",
@@ -3003,12 +3039,19 @@ export default {
       delete: "删除",
       read: "查看脚本",
     },
+    personal_information:{
+      name:'设置',
+      personal_setting: '个人设置',
+      api_keys: 'API Keys',
+      edit_password: "修改密码",
+      third_account: '第三方平台账号',
+    },
     other: {
       track: "功能测试",
       api: "接口测试",
       performance: "性能测试",
       project: "项目设置",
-      report: "报表统计"
+      report: "报表统计",
     }
   },
   env_options: {

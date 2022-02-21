@@ -15,6 +15,9 @@
     color="#606266"
     background-color="#F4F4F5"
     :if-from-variable-advance="ifFromVariableAdvance"
+    :environmentType="environmentType"
+    :environmentGroupId="environmentGroupId"
+    :envMap="envMap"
     :title="$t('commons.scenario')">
 
     <template v-slot:afterTitle v-if="isSameSpace">
@@ -41,13 +44,6 @@
       <span class="ms-step-debug-code" :class="node.data.code ==='error'?'ms-req-error':'ms-req-success'" v-if="!loading && node.data.debug && !node.data.testing">
         {{ getCode() }}
       </span>
-    </template>
-    <template v-slot:scenarioEnable v-if="!ifFromVariableAdvance">
-      <el-tooltip :content="$t('commons.enable_scene_info')" placement="top">
-        <el-checkbox v-model="scenario.environmentEnable" @change="checkEnv" :disabled="scenario.disabled">
-          {{ $t('commons.enable_scene') }}
-        </el-checkbox>
-      </el-tooltip>
     </template>
     <template v-slot:button v-if="!ifFromVariableAdvance">
       <el-tooltip :content="$t('api_test.run')" placement="top" v-if="!scenario.run">
@@ -90,7 +86,7 @@ export default {
       type: Boolean,
       default: true,
     },
-    showVersion:{
+    showVersion: {
       type: Boolean,
       default: true,
     },
@@ -153,6 +149,10 @@ export default {
   },
   methods: {
     run() {
+      if(!this.scenario.enable){
+        this.$warning(this.$t('api_test.automation.debug_message'));
+        return;
+      }
       this.scenario.run = true;
       let runScenario = JSON.parse(JSON.stringify(this.scenario));
       runScenario.hashTree = [this.scenario];

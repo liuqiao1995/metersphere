@@ -8,6 +8,7 @@ import com.google.gson.Gson;
 import io.metersphere.api.dto.APIReportResult;
 import io.metersphere.api.dto.EnvironmentType;
 import io.metersphere.api.dto.automation.*;
+import io.metersphere.api.dto.datacount.request.ScheduleInfoRequest;
 import io.metersphere.api.dto.definition.ApiTestCaseRequest;
 import io.metersphere.api.dto.definition.BatchRunDefinitionRequest;
 import io.metersphere.api.dto.definition.TestPlanApiCaseDTO;
@@ -55,6 +56,10 @@ import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionUtils;
+import org.quartz.CronExpression;
+import org.quartz.CronScheduleBuilder;
+import org.quartz.CronTrigger;
+import org.quartz.TriggerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -367,7 +372,7 @@ public class TestPlanService {
         testPlanTestCaseMapper.deleteByExample(testPlanTestCaseExample);
     }
 
-    private void calcTestPlanRate(List<TestPlanDTOWithMetric> testPlans) {
+    public void calcTestPlanRate(List<TestPlanDTOWithMetric> testPlans) {
         testPlans.forEach(testPlan -> {
             testPlan.setTested(0);
             testPlan.setPassed(0);
@@ -431,6 +436,18 @@ public class TestPlanService {
             TestPlanReportExample example = new TestPlanReportExample();
             example.createCriteria().andTestPlanIdEqualTo(item.getId());
             item.setExecutionTimes((int) testPlanReportMapper.countByExample(example));
+            if (StringUtils.isNotBlank(item.getScheduleId())) {
+                if (item.isScheduleOpen()) {
+                    item.setScheduleStatus(ScheduleStatus.OPEN.name());
+                    Schedule schedule = scheduleService.getScheduleByResource(item.getId(), ScheduleGroup.TEST_PLAN_TEST.name());
+                    item.setScheduleCorn(schedule.getValue());
+                    item.setScheduleExecuteTime(getNextTriggerTime(schedule.getValue()));
+                } else {
+                    item.setScheduleStatus(ScheduleStatus.SHUT.name());
+                }
+            } else {
+                item.setScheduleStatus(ScheduleStatus.NOTSET.name());
+            }
         });
         calcTestPlanRate(testPlans);
         return testPlans;
@@ -900,7 +917,7 @@ public class TestPlanService {
         List<TestPlanCaseDTO> testPlanTestCases = listTestCaseByPlanId(planId);
         List<IssuesDao> issues = new ArrayList<>();
         for (TestPlanCaseDTO testCase : testPlanTestCases) {
-            List<IssuesDao> issue = issuesService.getIssues(testCase.getCaseId());
+            List<IssuesDao> issue = issuesService.getIssues(testCase.getId(), IssueRefType.PLAN_FUNCTIONAL.name());
             if (issue.size() > 0) {
                 for (IssuesDao i : issue) {
                     i.setModel(testCase.getNodePath());
@@ -1380,7 +1397,7 @@ public class TestPlanService {
                 report.setFunctionFailureCases(failureCases);
             }
             if (checkReportConfig(config, "functional", "issue")) {
-                List<IssuesDao> issueList = issuesService.getIssuesByPlanoId(planId);
+                List<IssuesDao> issueList = issuesService.getIssuesByPlanId(planId);
                 report.setIssueList(issueList);
             }
         }
@@ -1982,5 +1999,56 @@ public class TestPlanService {
             customFields = customFieldMapper.selectByExampleWithBLOBs(example);
         }
         return JSONArray.parseArray(customFields.get(0).getOptions());
+    }
+
+    public void batchUpdateScheduleEnable(ScheduleInfoRequest request) {
+        List<String> scheduleIds = request.getTaskIds();
+        if (request.isSelectAll()) {
+            QueryTestPlanRequest queryTestPlanRequest = request.getQueryTestPlanRequest();
+            request.getQueryTestPlanRequest().setOrders(ServiceUtils.getDefaultOrder(queryTestPlanRequest.getOrders()));
+            if (StringUtils.isNotBlank(queryTestPlanRequest.getProjectId())) {
+                request.getQueryTestPlanRequest().setProjectId(queryTestPlanRequest.getProjectId());
+            }
+            List<TestPlanDTOWithMetric> testPlans = extTestPlanMapper.list(queryTestPlanRequest);
+            scheduleIds = testPlans.stream().filter(testPlan -> testPlan.getScheduleId() != null).map(testPlan -> testPlan.getScheduleId()).collect(Collectors.toList());
+        }
+        for (String id : scheduleIds) {
+            Schedule schedule = scheduleService.getSchedule(id);
+            schedule.setEnable(request.isEnable());
+            apiAutomationService.updateSchedule(schedule);
+        }
+    }
+
+    public long countScheduleEnableTotal(QueryTestPlanRequest request) {
+        request.setOrders(ServiceUtils.getDefaultOrder(request.getOrders()));
+        if (StringUtils.isNotBlank(request.getProjectId())) {
+            request.setProjectId(request.getProjectId());
+        }
+        List<TestPlanDTOWithMetric> testPlans = extTestPlanMapper.list(request);
+        return testPlans.stream().filter(testPlan -> testPlan.getScheduleId() != null).count();
+
+    }
+
+    //获取下次执行时间（getFireTimeAfter，也可以下下次...）
+    private static long getNextTriggerTime(String cron) {
+        if (!CronExpression.isValidExpression(cron)) {
+            return 0;
+        }
+        CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity("Caclulate Date").withSchedule(CronScheduleBuilder.cronSchedule(cron)).build();
+        Date time0 = trigger.getStartTime();
+        Date time1 = trigger.getFireTimeAfter(time0);
+        return time1.getTime();
+    }
+
+    public ScheduleDTO updateTestPlanBySchedule(ScheduleInfoRequest request) {
+        ScheduleDTO scheduleDTO = new ScheduleDTO();
+        Schedule schedule = scheduleService.getSchedule(request.getTaskID());
+        schedule.setEnable(request.isEnable());
+        apiAutomationService.updateSchedule(schedule);
+        BeanUtils.copyBean(scheduleDTO, schedule);
+        if (schedule.getEnable() != null && schedule.getEnable()) {
+            scheduleDTO.setScheduleExecuteTime(getNextTriggerTime(schedule.getValue()));
+        }
+        return scheduleDTO;
     }
 }

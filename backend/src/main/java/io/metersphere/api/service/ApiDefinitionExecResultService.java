@@ -67,7 +67,7 @@ public class ApiDefinitionExecResultService {
 
         for (RequestResult item : requestResults) {
             item.setEndTime(System.currentTimeMillis());
-            if (item.getResponseResult() != null) {
+            if (item.getResponseResult() != null && item.getResponseResult().getResponseTime() <= 0) {
                 item.getResponseResult().setResponseTime((item.getEndTime() - item.getStartTime()));
             }
             if (!StringUtils.startsWithAny(item.getName(), "PRE_PROCESSOR_ENV_", "POST_PROCESSOR_ENV_")) {
@@ -136,6 +136,7 @@ public class ApiDefinitionExecResultService {
     public void editStatus(ApiDefinitionExecResult saveResult, String type, String status, Long time, String reportId, String testId) {
         String name = testId;
         String version = "";
+        String projectId = "";
         if (StringUtils.equalsAnyIgnoreCase(type, ApiRunMode.API_PLAN.name(), ApiRunMode.SCHEDULE_API_PLAN.name(), ApiRunMode.JENKINS_API_PLAN.name(), ApiRunMode.MANUAL_PLAN.name())) {
             TestPlanApiCase testPlanApiCase = testPlanApiCaseMapper.selectByPrimaryKey(testId);
             ApiTestCaseWithBLOBs caseWithBLOBs = null;
@@ -164,11 +165,13 @@ public class ApiDefinitionExecResultService {
             if (caseWithBLOBs != null) {
                 name = caseWithBLOBs.getName();
                 version = caseWithBLOBs.getVersionId();
+                projectId = caseWithBLOBs.getProjectId();
             }
         } else {
             ApiDefinition apiDefinition = apiDefinitionMapper.selectByPrimaryKey(testId);
             if (apiDefinition != null) {
                 name = apiDefinition.getName();
+                projectId = apiDefinition.getProjectId();
             } else {
                 ApiTestCaseWithBLOBs caseWithBLOBs = apiTestCaseMapper.selectByPrimaryKey(testId);
                 if (caseWithBLOBs != null) {
@@ -183,8 +186,12 @@ public class ApiDefinitionExecResultService {
                     }
                     name = caseWithBLOBs.getName();
                     version = caseWithBLOBs.getVersionId();
+                    projectId = caseWithBLOBs.getProjectId();
                 }
             }
+        }
+        if (StringUtils.isEmpty(saveResult.getProjectId()) && StringUtils.isNotEmpty(projectId)) {
+            saveResult.setProjectId(projectId);
         }
         saveResult.setVersionId(version);
         saveResult.setName(name);
@@ -350,13 +357,7 @@ public class ApiDefinitionExecResultService {
             saveResult.setStatus(status);
             saveResult.setResourceId(item.getName());
             saveResult.setStartTime(item.getStartTime());
-            saveResult.setEndTime(item.getResponseResult().getResponseTime());
-            // 清空上次执行结果的内容，只保留近五条结果
-            ApiDefinitionExecResult prevResult = extApiDefinitionExecResultMapper.selectMaxResultByResourceIdAndType(item.getName(), type);
-            if (prevResult != null) {
-                prevResult.setContent(null);
-                apiDefinitionExecResultMapper.updateByPrimaryKeySelective(prevResult);
-            }
+            saveResult.setEndTime(item.getEndTime());
 
             if (StringUtils.isNotEmpty(saveResult.getTriggerMode()) && saveResult.getTriggerMode().equals("CASE")) {
                 saveResult.setTriggerMode(TriggerMode.MANUAL.name());

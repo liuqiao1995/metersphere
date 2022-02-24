@@ -129,6 +129,7 @@
                 @refreshTree="refreshTree"
                 @changeSelectDataRangeAll="changeSelectDataRangeAll"
                 @editApi="editApi"
+                @copyApi="copyApi"
                 @handleCase="handleCase"
                 @showExecResult="showExecResult"
                 @refreshTable="refresh"
@@ -564,7 +565,7 @@ export default {
       let tab = this.apiTabs;
       delete tab[0];
       tab.forEach(t => {
-        if (t.api && this.$store.state.apiMap.has(t.api.id) && (this.$store.state.apiMap.get(t.api.id).get("responseChange") === true || this.$store.state.apiMap.get(t.api.id).get("requestChange") === true ||
+        if (t.type === 'ADD' && t.api && this.$store.state.apiMap.has(t.api.id) && (this.$store.state.apiMap.get(t.api.id).get("responseChange") === true || this.$store.state.apiMap.get(t.api.id).get("requestChange") === true ||
           this.$store.state.apiMap.get(t.api.id).get("fromChange") === true)) {
           message += t.api.name + "，";
         }
@@ -699,8 +700,8 @@ export default {
       if (!index) {
         let name = "";
         if (row.isCopy) {
-          name = "copy" + "-" + row.name;
-          row.name = "copy" + "-" + row.name;
+          name = "copy" + "_" + row.name;
+          row.name = "copy" + "_" + row.name;
         } else {
           if (row.name) {
             name = this.$t('api_test.definition.request.edit_api') + "-" + row.name;
@@ -719,6 +720,21 @@ export default {
       } else {
         this.apiDefaultTab = index.name;
       }
+    },
+    copyApi(row) {
+      let name = "";
+      if (row.isCopy) {
+        name = "copy" + "_" + row.name;
+        row.name = "copy" + "_" + row.name;
+      }
+      this.activeTab = "api";
+      if (row != null && row.tags != 'null' && row.tags != '' && row.tags != undefined) {
+        if (Object.prototype.toString.call(row.tags).match(/\[object (\w+)\]/)[1].toLowerCase() !== 'object'
+          && Object.prototype.toString.call(row.tags).match(/\[object (\w+)\]/)[1].toLowerCase() !== 'array') {
+          row.tags = JSON.parse(row.tags);
+        }
+      }
+      this.handleTabsEdit(name, "ADD", row);
     },
     handleCase(api) {
       this.currentApi = api;

@@ -84,11 +84,11 @@
         </ms-table-column>
 
         <ms-table-column
-            prop="tags"
-            :field="item"
-            :fields-width="fieldsWidth"
-            :label="$t('commons.tag')"
-            min-width="120px">
+          prop="tags"
+          :field="item"
+          :fields-width="fieldsWidth"
+          :label="$t('commons.tag')"
+          min-width="120px">
           <template v-slot:default="scope">
             <ms-tag v-for="(tag, index) in scope.row.showTags" :key="tag + '_' + index" type="success" effect="plain"
                     :content="tag" style="margin-left: 0px; margin-right: 2px"/>
@@ -96,26 +96,26 @@
           </template>
         </ms-table-column>
           <ms-table-column
-              sortable
-              prop="createTime"
-              :field="item"
-              :fields-width="fieldsWidth"
-              :label="$t('commons.create_time')"
-              min-width="140px">
+            sortable
+            prop="createTime"
+            :field="item"
+            :fields-width="fieldsWidth"
+            :label="$t('commons.create_time')"
+            min-width="140px">
           <template v-slot:default="scope">
             <span>{{ scope.row.createTime | timestampFormatDate }}</span>
           </template>
         </ms-table-column>
 
         <ms-table-column
-            prop="nodePath"
-            :field="item"
-            :fields-width="fieldsWidth"
-            :label="$t('test_track.case.module')"
-            min-width="120px"/>
+          prop="nodePath"
+          :field="item"
+          :fields-width="fieldsWidth"
+          :label="$t('test_track.case.module')"
+          min-width="120px"/>
 
         <ms-table-column
-            prop="projectName"
+          prop="projectName"
           :field="item"
           :fields-width="fieldsWidth"
           :label="$t('test_track.plan.plan_project')"
@@ -266,6 +266,8 @@
       :search-param.sync="condition"
       :page-num="currentPage"
       :page-size="pageSize"
+      :next-page-data="nextPageData"
+      :pre-page-data="prePageData"
       @nextPage="nextPage"
       @prePage="prePage"
       @refresh="initTableData"
@@ -303,7 +305,6 @@ import MsTableOperatorButton from "../../../../../common/components/MsTableOpera
 import {TEST_PLAN_TEST_CASE_CONFIGS} from "../../../../../common/components/search/search-components";
 import BatchEdit from "../../../../case/components/BatchEdit";
 import ClassicEditor from "@ckeditor/ckeditor5-build-classic";
-import {hub} from "@/business/components/track/plan/event-bus";
 import MsTag from "@/business/components/common/components/MsTag";
 import {
   buildBatchParam,
@@ -317,6 +318,7 @@ import {getProjectMember} from "@/network/user";
 import {getTestTemplate} from "@/network/custom-field-template";
 import {editTestPlanTestCaseOrder} from "@/network/test-plan";
 import {SYSTEM_FIELD_NAME_MAP} from "@/common/js/table-constants";
+import {getTestPlanTestCase} from "@/network/testCase";
 
 export default {
   name: "FunctionalTestCaseList",
@@ -346,6 +348,8 @@ export default {
       condition: {
         components: TEST_PLAN_TEST_CASE_CONFIGS
       },
+      nextPageData: null,
+      prePageData: null,
       enableOrderDrag: true,
       showMyTestCase: false,
       tableData: [],
@@ -467,7 +471,7 @@ export default {
   },
   mounted() {
     this.$emit('setCondition', this.condition);
-    hub.$on("openFailureTestCase", row => {
+    this.$EventBus.$on("openFailureTestCase", row => {
       this.isReadOnly = true;
       this.condition.status = 'Failure';
       this.$refs.testPlanTestCaseEdit.openTestCaseEdit(row, this.tableData);
@@ -479,7 +483,7 @@ export default {
     this.getVersionOptions();
   },
   beforeDestroy() {
-    hub.$off("openFailureTestCase");
+    this.$EventBus.$off("openFailureTestCase");
   },
   methods: {
     nextPage() {
@@ -535,8 +539,7 @@ export default {
       }
       this.condition.projectId = getCurrentProjectID();
       if (this.planId) {
-        this.result = this.$post(this.buildPagePath('/test/plan/case/list'), this.condition, response => {
-          let data = response.data;
+        getTestPlanTestCase(this.currentPage, this.pageSize, this.condition, (data) => {
           this.total = data.itemCount;
           this.tableData = data.listObject;
           for (let i = 0; i < this.tableData.length; i++) {
@@ -549,8 +552,38 @@ export default {
               this.$set(this.tableData[i], "issuesContent", JSON.parse(this.tableData[i].issues));
             }
           }
+
+          // 需要判断tableData数据，放回调里面
+          this.getPreData();
+
           if (callback) {
             callback();
+          }
+        });
+        this.getNexPageData();
+      }
+    },
+    getNexPageData() {
+      getTestPlanTestCase(this.currentPage * this.pageSize + 1, 1, this.condition, (data) => {
+        if (data.listObject && data.listObject.length > 0) {
+          this.nextPageData = {
+            name: data.listObject[0].name
+          }
+        } else {
+          this.nextPageData = null;
+        }
+      });
+    },
+    getPreData() {
+      // 如果不是第一页并且只有一条数据时，需要调用
+      if (this.currentPage > 1 && this.tableData.length === 1) {
+        getTestPlanTestCase((this.currentPage - 1) * this.pageSize, 1, this.condition, (data) => {
+          if (data.listObject && data.listObject.length > 0) {
+            this.prePageData = {
+              name: data.listObject[0].name
+            }
+          } else {
+            this.prePageData = null;
           }
         });
       }

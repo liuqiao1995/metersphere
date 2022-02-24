@@ -12,7 +12,7 @@
     </select>
 
     <select id="getIssueForMinder" resultType="io.metersphere.base.domain.IssuesDao">
-        select issues.id, issues.title , issues.num , test_case_issues.resource_id as caseId
+        select issues.id, issues.title , issues.num , test_case_issues.resource_id, test_case_issues.ref_id, test_case_issues.ref_type
         from issues
         inner join test_case_issues
         on test_case_issues.issues_id = issues.id
@@ -46,6 +46,9 @@
     <select id="getIssues" resultType="io.metersphere.base.domain.IssuesDao">
         select
         <include refid="Issue_List_Column"/>
+        <if test="request.projectId != null||request.workspaceId != null">
+            , project.name as projectName
+        </if>
         from issues
         <if test="request.projectId != null||request.workspaceId != null">
             left join

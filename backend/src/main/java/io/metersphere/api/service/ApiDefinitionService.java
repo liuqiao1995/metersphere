@@ -135,8 +135,18 @@ public class ApiDefinitionService {
         if (StringUtils.isNotBlank(request.getProjectId())) {
             buildProjectInfo(resList, request.getProjectId());
             calculateResult(resList, request.getProjectId());
+        } else {
+            buildProjectInfoWidthoutProject(resList);
         }
         return resList;
+    }
+
+    private void buildProjectInfoWidthoutProject(List<ApiDefinitionResult> resList) {
+        resList.forEach(i -> {
+            Project project = projectMapper.selectByPrimaryKey(i.getProjectId());
+            i.setProjectName(project.getName());
+            i.setVersionEnable(project.getVersionEnable());
+        });
     }
 
     public void buildUserInfo(List<ApiDefinitionResult> apis) {
@@ -1073,6 +1083,7 @@ public class ApiDefinitionService {
             return null;
         }
         APIReportResult reportResult = new APIReportResult();
+        reportResult.setStatus(result.getStatus());
         reportResult.setContent(result.getContent());
         return reportResult;
     }

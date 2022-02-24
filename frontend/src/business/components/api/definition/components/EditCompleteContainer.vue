@@ -81,7 +81,7 @@
     </div>
 
     <div v-if="showMock && (currentProtocol === 'HTTP' || currentProtocol === 'TCP')">
-      <mock-tab :base-mock-config-data="baseMockConfigData" @redirectToTest="redirectToTest"
+      <mock-tab :base-mock-config-data="baseMockConfigData" @redirectToTest="redirectToTest" :version-name="currentApi.versionName"
                 :is-tcp="currentProtocol === 'TCP'"/>
     </div>
     <div v-if="showTestCaseList">
@@ -119,6 +119,7 @@ import ApiCaseSimpleList from "./list/ApiCaseSimpleList";
 import MsApiCaseList from "./case/ApiCaseList";
 import {getUUID} from "@/common/js/utils";
 import {TYPE_TO_C} from "@/business/components/api/automation/scenario/Setting";
+import _ from 'lodash';
 
 export default {
   name: "EditCompleteContainer",
@@ -218,6 +219,11 @@ export default {
       if (this.currentApi.request != null && this.currentApi.request != 'null' && this.currentApi.request != undefined) {
         if (Object.prototype.toString.call(this.currentApi.request).match(/\[object (\w+)\]/)[1].toLowerCase() !== 'object') {
           this.currentApi.request = JSON.parse(this.currentApi.request);
+          if (this.currentApi.request.body && !this.currentApi.request.body.type) {
+            let tempRequest = _.cloneDeep(this.currentApi.request);
+            tempRequest.body = {type: null};
+            this.currentApi.request = tempRequest;
+          }
         }
       }
       if (this.currentApi && this.currentApi.request && !this.currentApi.request.hashTree) {
@@ -273,7 +279,12 @@ export default {
       this.reload();
     },
     changeTab(tabType) {
+      this.beforeChangeTab();
       this.refreshButtonActiveClass(tabType);
+    },
+    beforeChangeTab(){
+      //关闭接口用例弹窗
+      this.$refs.caseList.close();
     },
     redirectToTest(param) {
       this.refreshButtonActiveClass("test");

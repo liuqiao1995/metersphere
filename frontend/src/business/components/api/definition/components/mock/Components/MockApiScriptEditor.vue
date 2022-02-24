@@ -34,6 +34,7 @@ import MsDropdown from "@/business/components/common/components/MsDropdown";
 import CustomFunctionRelate from "@/business/components/project/menu/function/CustomFunctionRelate";
 import ApiFuncRelevance from "@/business/components/project/menu/function/ApiFuncRelevance";
 import MockScriptNavMenu from "@/business/components/api/definition/components/mock/Components/MockScriptNavMenu";
+import i18n from "@/i18n/i18n";
 
 export default {
   name: "MockApiScriptEditor",
@@ -69,8 +70,10 @@ export default {
     }
   },
   created() {
-    if (!this.jsr223Processor.scriptLanguage) {
-      this.jsr223Processor.scriptLanguage = "beanshell";
+    if(this.jsr223Processor){
+      if (!this.jsr223Processor.scriptLanguage) {
+        this.jsr223Processor.scriptLanguage = "beanshell";
+      }
     }
     if (this.showApi) {
       this.baseCodeTemplates = this.httpCodeTemplates;
@@ -110,6 +113,19 @@ export default {
               value: this.getScript("rest"),
             },
 
+          ]
+        },
+        {
+          title: i18n.t('project.code_segment.custom_value'),
+          children: [
+            {
+              title: i18n.t('api_test.request.processor.code_template_get_variable'),
+              value: 'vars.get("variable_name");',
+            },
+            {
+              title: i18n.t('api_test.request.processor.code_template_set_variable'),
+              value: 'vars.put("variable_name", "variable_value");',
+            },
           ]
         },
         {
@@ -179,7 +195,7 @@ export default {
           if (laguanges === "python") {
             returnScript = 'param=vars["body.${param}"]';
           } else {
-            returnScript = 'var param=vars.get(body.${param}")\n' +
+            returnScript = 'var param=vars.get("body.${param}");\n' +
               '//如果对象是多层JSON，需要引入fastjson协助解析:\n' +
               '// 以"{\"name\":\"user\",\"rows\":[{\"type\":1}]}" 为demo,取rows第1个的type数据:\n' +
               'import com.alibaba.fastjson.JSON;\n' +

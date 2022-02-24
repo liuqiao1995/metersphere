@@ -36,7 +36,7 @@
         </el-collapse-transition>
       </el-form>
     </div>
-    <div v-if="response.usePostScript">
+    <div v-show="response.usePostScript">
       <el-row style="margin-top: 10px;">
         <el-col :span="12">
           <p class="tip">{{ $t('api_test.definition.request.post_script') }}</p>
@@ -47,7 +47,7 @@
       </el-row>
       <div class="text-container" style="border:1px #DCDFE6 solid; height: 100%;border-radius: 4px ;width: 100%">
         <div style="padding: 15px 0;">
-          <mock-api-script-editor :jsr223-processor="response.body.scriptObject"/>
+          <mock-api-script-editor v-if="response.body.scriptObject" :jsr223-processor="response.body.scriptObject"/>
         </div>
       </div>
     </div>

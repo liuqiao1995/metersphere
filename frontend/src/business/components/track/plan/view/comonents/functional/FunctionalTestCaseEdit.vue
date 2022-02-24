@@ -33,6 +33,8 @@
                         :page-size="pageSize"
                         :page-total="pageTotal"
                         :total="total"
+                        :next-page-data="nextPageData"
+                        :pre-page-data="prePageData"
                         @pre="handlePre"
                         @next="saveCase(true, true)"
                         :list="testCases"/>
@@ -239,7 +241,9 @@ export default {
     pageSize: {
       type: Number,
       default: 1
-    }
+    },
+    nextPageData: Object,
+    prePageData: Object
   },
   computed: {
     projectId() {

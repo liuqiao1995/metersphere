@@ -715,6 +715,10 @@ export default {
       this.dialogFormVisible = false;
     },
     saveCase(callback) {
+      if (this.readOnly) {
+        this.$warning(this.$t("commons.no_operation_permission"));
+        return false;
+      }
       if (this.validateForm()) {
         this._saveCase(callback);
       }else{

@@ -30,7 +30,6 @@
       :screen-height="screenHeight"
       :batch-operators="buttons"
       @handlePageChange="initTableData"
-      @handleRowClick="handleEdit"
       :fields.sync="fields"
       :remember-order="true"
       @refresh="initTableData"

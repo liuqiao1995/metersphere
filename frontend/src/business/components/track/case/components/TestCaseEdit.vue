@@ -156,14 +156,6 @@
 
       </el-dialog>
 
-      <el-dialog
-        :visible.sync="isValidate"
-        :destroy-on-close="true"
-        :title="$t('commons.prompt')"
-      >
-        <span>{{currentValidateName+$t('commons.cannot_be_null')}}</span>
-      </el-dialog>
-
       <version-create-other-info-select @confirmOtherInfo="confirmOtherInfo" ref="selectPropDialog"></version-create-other-info-select>
     </div>
   </el-card>
@@ -1028,6 +1020,8 @@ export default {
             }
           }
           this.isValidate = true;
+          this.$warning(this.currentValidateName +this.$t('commons.cannot_be_null'));
+          this.currentValidateName = '';
           return false;
         }
       });

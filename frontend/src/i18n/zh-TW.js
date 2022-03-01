@@ -2312,6 +2312,8 @@ export default {
       allow_associated_repetitive_cases_tip: "是否允許同一個測試計劃中多次關聯相同用例",
       performance_case_count: "性能測試用例數",
       running: "運行中",
+      please_choose_test_case: "请选择测试用例！",
+      execute_tip: "步驟執行結果中含有 失敗 結果，無法標記該用例為 通過 狀態！"
     },
     issue: {
       issue: "缺陷",

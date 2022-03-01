@@ -61,3 +61,9 @@ export default {
 <style scoped>
 
 </style>
+
+<style>
+.v-modal {
+  display: none;
+}
+</style>

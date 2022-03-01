@@ -51,6 +51,12 @@
           </template>
         </el-table-column>
 
+        <el-table-column :label="$t('test_track.case.case_desc')" prop="desc" :field="item" min-width="100px">
+          <template v-slot:default="scope">
+            <el-link @click.stop="getCase(scope.row.caseId)" style="color:#783887;">{{ $t('commons.preview') }}</el-link>
+          </template>
+        </el-table-column>
+
         <el-table-column
           prop="updateTime"
           :label="$t('commons.update_time')"
@@ -60,6 +66,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <test-case-preview ref="testCasePreview" :loading="rowCaseResult.loading" style="position: fixed; z-index: 9999;"/>
     </div>
 
 </template>
@@ -69,6 +76,7 @@ import PriorityTableItem from "../../../../../../common/tableItems/planview/Prio
 import TypeTableItem from "../../../../../../common/tableItems/planview/TypeTableItem";
 import MethodTableItem from "../../../../../../common/tableItems/planview/MethodTableItem";
 import StatusTableItem from "../../../../../../common/tableItems/planview/StatusTableItem";
+import TestCasePreview from "@/business/components/track/case/components/TestCasePreview";
 import {
   getPlanFunctionAllCase,
   getPlanFunctionFailureCase,
@@ -77,7 +85,7 @@ import {
 } from "@/network/test-plan";
 export default {
   name: "FunctionalCases",
-  components: {StatusTableItem, MethodTableItem, TypeTableItem, PriorityTableItem},
+  components: {StatusTableItem, TestCasePreview, MethodTableItem, TypeTableItem, PriorityTableItem},
   props: {
     planId: String,
     isTemplate: Boolean,
@@ -89,7 +97,8 @@ export default {
   },
   data() {
     return {
-      testCases:  []
+      testCases:  [],
+      rowCaseResult: {}
     }
   },
   mounted() {
@@ -131,7 +140,27 @@ export default {
           });
         }
       }
-    }
+    },
+    getCase(id) {
+      this.$refs.testCasePreview.open();
+      this.rowCaseResult.loading = true;
+
+      this.rowCaseResult = this.$get('test/case/get/step/' + id, response => {
+        this.rowCase = response.data;
+        this.rowCase.steps = JSON.parse(this.rowCase.steps);
+        if (!this.rowCase.steps || this.rowCase.length < 1) {
+          this.rowCase.steps = [{
+            num: 1,
+            desc: '',
+            result: ''
+          }];
+        }
+        if (!this.rowCase.stepModel) {
+          this.rowCase.stepModel = "STEP";
+        }
+        this.$refs.testCasePreview.setData(this.rowCase);
+      });
+    },
   }
 }
 </script>
